@@ -18,6 +18,33 @@ def send_email(to, subject, content):
         return "Email sent successfully"
     except Exception as e:
         return f"An error occurred: {e}"
+    
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from decouple import config
+
+email_user_cred=config("username")
+email_user_pass=config("password")
+
+def send_html_email(to, subject, html_content):
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = "arturo@skills.tech"  # Cambiar a tu dirección de correo
+    msg['To'] = to
+
+    # Parte HTML del mensaje
+    html_part = MIMEText(html_content, 'html')
+    msg.attach(html_part)
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(email_user_cred, email_user_pass)  # Cambiar a tus credenciales
+            server.send_message(msg)
+        print(f"Correo enviado con éxito a {to}")
+    except Exception as e:
+        print(f"Error al enviar correo a {to}: {e}")
+
 
 
 
