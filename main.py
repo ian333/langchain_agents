@@ -21,6 +21,8 @@ from models.chat_models import ChatRequest
 from examples.chat_examples import chat_examples
 from multi_agents.agent_executor import run_agent
 from multi_agents.agent_utils import process_course_info  
+from starlette.middleware.cors import CORSMiddleware
+
 
 # Importaciones de configuración y utilidades adicionales
 from decouple import config
