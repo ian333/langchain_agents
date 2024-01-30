@@ -36,6 +36,14 @@ supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
 # Configuración de la aplicación FastAPI
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todas las origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos los métodos
+    allow_headers=["*"],  # Permite todos los headers
+)
+
 @app.post("/create-reminder/")
 async def create_reminder(reminder_data: dict):
     """
