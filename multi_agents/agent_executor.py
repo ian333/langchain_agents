@@ -54,19 +54,34 @@ def create_agent_executor(custom_prompt=None):
     return agent_executor
 
 # Función para ejecutar el agente con una consulta dada
-def run_agent(query, custom_prompt=None,thread_id=None,prompt=None,videos=None):
+def run_agent(query,member_id=None, courseid=None,custom_prompt=None,thread_id=None,prompt=None,videos=None):
     print(custom_prompt)
     agent_executor = create_agent_executor(custom_prompt=custom_prompt)
     result = agent_executor.invoke({"input": query})
-    save_agent_response(thread_id=thread_id,answer=result["output"],prompt=query,videos=videos)
+    save_agent_response(thread_id=thread_id,member_id=member_id,courseid=courseid,answer=result["output"],prompt=query,videos=videos)
     return result
 
 
 
 
 
-def save_agent_response(thread_id,  answer,prompt=None, followup=None, videos=None, sources=None, fact=None):
+def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None):
+    url_user: str = config("SUPABASE_USER_URL")
+    key_user: str = config("SUPABASE_USER_KEY")
+    supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
     # Preparar los datos para insertar
+    thread_exists = supabase_user.table("threads_tb").select("*").eq("id", thread_id).execute().data
+    if not thread_exists:
+        thread_data = {
+            "id": thread_id,
+            # Añadir aquí más campos si son necesarios, por ejemplo:
+            "memberid": member_id,
+            "courseid": courseid,
+            "created_at": datetime.now().isoformat()
+        }
+        supabase_user.table("threads_tb").insert(thread_data).execute()
+
+
     response_data = {
         "threadid": thread_id,
         "prompt": prompt,
@@ -81,9 +96,7 @@ def save_agent_response(thread_id,  answer,prompt=None, followup=None, videos=No
     # Insertar los datos en la tabla responses_tb
     print(response_data)
     # response = supabase_user.table("responses_tb").select("*").eq("threadid", "4a37be7f-ce2c-4f19-aaaa-15f6d334a908").execute().data[0]
-    url_user: str = config("SUPABASE_USER_URL")
-    key_user: str = config("SUPABASE_USER_KEY")
-    supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
+
 
 
     
