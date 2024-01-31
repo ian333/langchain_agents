@@ -89,8 +89,11 @@ async def chat_endpoint(request_body: ChatRequest):
         raise HTTPException(status_code=400, detail="Texto no proporcionado")
 
     # Obtener instrucciones de la empresa desde la tabla de admin
-    admin_data = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute().data[0]
+    response = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute()
 
+    # Verificar si la respuesta tiene datos
+    if response.data:
+        admin_data = response.data[0]
     
     print(admin_data)
     processed_info,reference_videos = process_course_info(admin_data)
