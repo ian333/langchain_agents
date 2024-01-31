@@ -77,7 +77,7 @@ async def chat_endpoint(request_body: ChatRequest):
     - dict: Respuesta del agente y otros detalles relevantes.
     """
     # Desempaquetar los datos recibidos
-    text = request_body.text
+    # text = request_body.text
     courseid = request_body.courseid
     memberid = request_body.memberid
     prompt = request_body.prompt
@@ -86,8 +86,7 @@ async def chat_endpoint(request_body: ChatRequest):
     email = request_body.email
     processed_info={}
     reference_videos={}
-    if not text:
-        raise HTTPException(status_code=400, detail="Texto no proporcionado")
+
 
     # Obtener instrucciones de la empresa desde la tabla de admin
     response = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute()
@@ -108,14 +107,13 @@ async def chat_endpoint(request_body: ChatRequest):
         "memberid": memberid,
         "prompt": prompt,
         "threadid": threadid,
-        "text": text,
         "followup": followup,
         "email": email,
         "timestamp": datetime.now().isoformat()
     }
     print(user_data)
 
-    result = run_agent(query=text,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
+    result = run_agent(query=followup,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
     # Insertar o actualizar en Supabase Usuario
     # response = supabase_user.table("user_table_name").insert(user_data).execute()
 
