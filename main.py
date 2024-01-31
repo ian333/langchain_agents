@@ -85,6 +85,7 @@ async def chat_endpoint(request_body: ChatRequest):
     followup = request_body.followup
     email = request_body.email
     processed_info={}
+    reference_videos={}
     if not text:
         raise HTTPException(status_code=400, detail="Texto no proporcionado")
 
