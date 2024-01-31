@@ -6,7 +6,7 @@ from typing import Optional, List, Dict
 # Definición del modelo ChatRequest
 class ChatRequest(BaseModel):
     courseid: Optional[str] = Field(None, example="ba86e360-577c-4145-baac-974611be0872")
-    memberid: Optional[str] = Field(None, example="d6d7b6b9-a530-4fa5-9375-fd6bc54b41f5")
+    memberid: Optional[str] = Field(None, example="8b013804-faa6-426e-bfcc-43227f58e3c8")
     prompt: Optional[str] = Field(None, example="Explica el concepto de relatividad.")
     threadid: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), example=str(uuid.uuid4()))
     followup: Optional[List[Dict[str, str]]] = Field(None, example=[{"Answer": "¡Hola! Estoy bien, gracias. ¿Y tú? ¿En qué puedo ayudarte hoy?", "Prompt": "Hola, ¿cómo estás?"}])

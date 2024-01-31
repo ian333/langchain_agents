@@ -9,7 +9,14 @@ from supabase import create_client
 from decouple import config
 # Proyecto Admin
 
+import uuid
 
+def is_valid_uuid(val):
+    try:
+        uuid.UUID(str(val))
+        return True
+    except ValueError:
+        return False
 
 
 # Definición de las herramientas personalizadas
@@ -58,14 +65,14 @@ def run_agent(query,member_id=None, courseid=None,custom_prompt=None,thread_id=N
     print(custom_prompt)
     agent_executor = create_agent_executor(custom_prompt=custom_prompt)
     result = agent_executor.invoke({"input": query})
-    save_agent_response(thread_id=thread_id,member_id=member_id,courseid=courseid,answer=result["output"],prompt=query,videos=videos)
+    save_agent_response(thread_id=thread_id,memberid=member_id,courseid=courseid,answer=result["output"],prompt=query,videos=videos)
     return result
 
 
 
 
 
-def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None):
+def save_agent_response(thread_id,answer,courseid=None,memberid=None,prompt=None, followup=None, videos=None, sources=None, fact=None):
     url_user: str = config("SUPABASE_USER_URL")
     key_user: str = config("SUPABASE_USER_KEY")
     supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
@@ -74,11 +81,13 @@ def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=Non
     if not thread_exists:
         thread_data = {
             "id": thread_id,
+            "threadname":prompt,
             # Añadir aquí más campos si son necesarios, por ejemplo:
-            "memberid": member_id,
+            "memberid": memberid,
             "courseid": courseid,
             "created_at": datetime.now().isoformat()
         }
+        print(thread_data)
         supabase_user.table("threads_tb").insert(thread_data).execute()
 
 

@@ -1,4 +1,5 @@
 # main.py
+from uuid import uuid4  # Importa esta biblioteca en la parte superior de tu archivo
 
 # Importaciones de librerías estándar
 from datetime import datetime
@@ -87,6 +88,8 @@ async def chat_endpoint(request_body: ChatRequest):
     processed_info={}
     reference_videos={}
 
+    if not threadid:
+        threadid = str(uuid4())
 
     # Obtener instrucciones de la empresa desde la tabla de admin
     response = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute()
