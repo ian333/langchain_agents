@@ -113,7 +113,7 @@ async def chat_endpoint(request_body: ChatRequest):
     }
     print(user_data)
 
-    result = run_agent(query=followup,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
+    result = run_agent(query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
     # Insertar o actualizar en Supabase Usuario
     # response = supabase_user.table("user_table_name").insert(user_data).execute()
 
