@@ -95,8 +95,8 @@ async def chat_endpoint(request_body: ChatRequest):
     if response.data:
         admin_data = response.data[0]
     
-    print(admin_data)
-    processed_info,reference_videos = process_course_info(admin_data)
+        print(admin_data)
+        processed_info,reference_videos = process_course_info(admin_data)
     print(processed_info)
     # Aquí se manejaría la lógica para interactuar con el agente (comentado actualmente)
     # ...
