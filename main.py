@@ -84,7 +84,7 @@ async def chat_endpoint(request_body: ChatRequest):
     threadid = request_body.threadid  # Asume que ya viene generado si es necesario
     followup = request_body.followup
     email = request_body.email
-
+    processed_info={}
     if not text:
         raise HTTPException(status_code=400, detail="Texto no proporcionado")
 
@@ -97,7 +97,7 @@ async def chat_endpoint(request_body: ChatRequest):
     
         print(admin_data)
         processed_info,reference_videos = process_course_info(admin_data)
-    print(processed_info)
+        print(processed_info)
     # Aquí se manejaría la lógica para interactuar con el agente (comentado actualmente)
     # ...
 
