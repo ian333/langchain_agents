@@ -1,5 +1,5 @@
 from langchain.tools import tool
-from langchain.agents import AgentExecutor, create_openai_functions_agent
+from langchain.agents import AgentExecutor, create_react_agent,create_structured_chat_agent,agent
 from langchain_openai import ChatOpenAI
 from langchain import hub
 from langchain_core.prompts.chat import ChatPromptTemplate
@@ -8,71 +8,39 @@ from datetime import datetime
 from supabase import create_client
 from decouple import config
 # Proyecto Admin
+from multi_agents.follow_up import run_follow
 
 import uuid
 
-def is_valid_uuid(val):
-    try:
-        uuid.UUID(str(val))
-        return True
-    except ValueError:
-        return False
 
 
-# Definición de las herramientas personalizadas
-@tool
-def add_one_one() -> int:
-    """Suma 1 + 1."""
-    return 1 + 1
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from datetime import datetime
 
-@tool
-def add_two_two() -> int:
-    """Suma 2 + 2."""
-    return 2 + 2
+def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None):
+    # Configurar el prompt y el modelo
+    prompt_template = ChatPromptTemplate.from_template("Este es tu contexto de quien eres{custom_prompt},This is the story of the chat, lo unico que quiero que respondas es user_message {history} esto es para darte contexto de lo que esta pasando, this is the question of the user, solo responde esto {user_message}, return the answer of the user")
+    model = ChatOpenAI(model="gpt-4-0125-preview", temperature=0)
+    chain = prompt_template | model
 
-# Configuración de las herramientas para el agente
-def setup_tools():
-    tools = [add_one_one, add_two_two]
-    return tools
+    # Crear el contexto y el mensaje del usuario para la consulta
+    user_message = query  # Asumiendo que query contiene el mensaje actual del usuario
 
-# Creación del agente
-def create_agent(context=None):
-    tools = setup_tools()
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
-    
-    if context:
-        print(context)
-        custom_prompt = hub.pull("hwchase17/openai-functions-agent")
-        custom_prompt.messages[0].prompt.template=context
-        print(type(custom_prompt))
-        print(custom_prompt.messages[0].prompt.template)
-        print("----------")
-        print(custom_prompt[0])
-        print(custom_prompt[1])
+    # Ejecutar la cadena y obtener el resultado
+    result = chain.invoke({"history": history, "user_message": user_message,"custom_prompt":custom_prompt})
+    print(result.content)
 
-    
-    agent = create_openai_functions_agent(llm, tools, custom_prompt)
-    return agent, tools
+    # Guardar la respuesta en la base de datos
+    save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result.content, prompt=query, videos=videos)
 
-# Creación del ejecutor del agente
-def create_agent_executor(custom_prompt=None):
-    agent, tools = create_agent(context=custom_prompt)
-    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-    return agent_executor
-
-# Función para ejecutar el agente con una consulta dada
-def run_agent(query,member_id=None, courseid=None,custom_prompt=None,thread_id=None,prompt=None,videos=None):
-    print(custom_prompt)
-    agent_executor = create_agent_executor(custom_prompt=custom_prompt)
-    result = agent_executor.invoke({"input": query})
-    save_agent_response(thread_id=thread_id,memberid=member_id,courseid=courseid,answer=result["output"],prompt=query,videos=videos)
-    return result
+    return result.content
 
 
 
 
 
-def save_agent_response(thread_id,answer,courseid=None,memberid=None,prompt=None, followup=None, videos=None, sources=None, fact=None):
+def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None):
     url_user: str = config("SUPABASE_USER_URL")
     key_user: str = config("SUPABASE_USER_KEY")
     supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
@@ -83,14 +51,14 @@ def save_agent_response(thread_id,answer,courseid=None,memberid=None,prompt=None
             "id": thread_id,
             "threadname":prompt,
             # Añadir aquí más campos si son necesarios, por ejemplo:
-            "memberid": memberid,
+            "memberid": member_id,
             "courseid": courseid,
             "created_at": datetime.now().isoformat()
         }
         print(thread_data)
         supabase_user.table("threads_tb").insert(thread_data).execute()
 
-
+    followup=run_follow(prompt)
     response_data = {
         "threadid": thread_id,
         "prompt": prompt,
@@ -104,18 +72,8 @@ def save_agent_response(thread_id,answer,courseid=None,memberid=None,prompt=None
     
     # Insertar los datos en la tabla responses_tb
     print(response_data)
+
     # response = supabase_user.table("responses_tb").select("*").eq("threadid", "4a37be7f-ce2c-4f19-aaaa-15f6d334a908").execute().data[0]
-
-
-
-    
-#   "videos": [
-#     {
-#       "url": "https://www.youtube.com/watch?v=SEps-sO9GyM",
-#       "title": "Women Leaders | Path to Management | New York Life Insurance Company",
-#       "thumbnailUrl": "https://i.ytimg.com/vi/SEps-sO9GyM/maxresdefault.jpg"
-#     },
-
     response = supabase_user.table("responses_tb").insert(response_data).execute()
     
     # Verificar y manejar la respuesta

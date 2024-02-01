@@ -22,3 +22,5 @@ def process_course_info(course_info):
     )
     
     return course_description,reference_videos
+
+

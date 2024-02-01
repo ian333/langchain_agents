@@ -23,6 +23,7 @@ from examples.chat_examples import chat_examples
 from multi_agents.agent_executor import run_agent
 from multi_agents.agent_utils import process_course_info  
 from starlette.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, BackgroundTasks
 
 
 # Importaciones de configuración y utilidades adicionales
@@ -31,6 +32,11 @@ import uuid
 from supabase import create_client
 from decouple import config
 # Proyecto Admin
+
+import os
+
+os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
+
 url_admin: str = config("SUPABASE_ADMIN_URL")
 key_admin: str = config("SUPABASE_ADMIN_KEY")
 
@@ -67,7 +73,7 @@ async def create_reminder(reminder_data: dict):
 
 
 @app.post("/chat")
-async def chat_endpoint(request_body: ChatRequest):
+async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTasks):
     """
     Endpoint para procesar solicitudes de chat, interactuar con un agente y guardar la información en la base de datos.
 
@@ -116,7 +122,8 @@ async def chat_endpoint(request_body: ChatRequest):
     }
     print(user_data)
 
-    result = run_agent(query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
+    background_tasks.add_task(run_agent,query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
+
     # Insertar o actualizar en Supabase Usuario
     # response = supabase_user.table("user_table_name").insert(user_data).execute()
 
