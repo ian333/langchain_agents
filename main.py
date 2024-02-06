@@ -35,6 +35,9 @@ from decouple import config
 
 import os
 
+from multi_agents.videos import VideosQA
+from multi_agents.sources import SourcesQA
+
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 
 url_admin: str = config("SUPABASE_ADMIN_URL")
@@ -122,7 +125,17 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     }
     print(user_data)
 
-    background_tasks.add_task(run_agent,query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
+    # background_tasks.add_task(run_agent,query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
+    agent,id=run_agent(query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
+    # background_tasks.add_task(run_agent,query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
+    
+    
+    videos=VideosQA(courseid="547fec61-e5ee-450d-9e35-ac4f26b2b02d",id=id)
+    background_tasks.add_task(videos.query,query_text=prompt)
+
+    sources=SourcesQA(courseid="547fec61-e5ee-450d-9e35-ac4f26b2b02d",id=id)
+    sources.query(query_text=prompt)
+    background_tasks.add_task(sources.query,query_text=prompt)
 
     # Insertar o actualizar en Supabase Usuario
     # response = supabase_user.table("user_table_name").insert(user_data).execute()

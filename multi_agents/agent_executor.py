@@ -32,9 +32,9 @@ def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_i
     print(result.content)
 
     # Guardar la respuesta en la base de datos
-    save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result.content, prompt=query, videos=videos)
+    id=save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result.content, prompt=query, videos=videos)
 
-    return result.content
+    return result.content,id
 
 
 
@@ -75,6 +75,16 @@ def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=Non
 
     # response = supabase_user.table("responses_tb").select("*").eq("threadid", "4a37be7f-ce2c-4f19-aaaa-15f6d334a908").execute().data[0]
     response = supabase_user.table("responses_tb").insert(response_data).execute()
+    from multi_agents.videos import VideosQA
+    from multi_agents.sources import SourcesQA
+    id=response.data[0]["id"]
+
+#     videos=VideosQA(courseid="547fec61-e5ee-450d-9e35-ac4f26b2b02d",id=id)
+#     videos.query(query_text=prompt)
+# # 
+#     sources=SourcesQA(courseid="547fec61-e5ee-450d-9e35-ac4f26b2b02d",id=id)
+#     sources.query(query_text=prompt)
+
+
+    return response.data[0]["id"]
     
-    # Verificar y manejar la respuesta
-    print(response)

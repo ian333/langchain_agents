@@ -15,14 +15,21 @@ os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 # DeepLake
 os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
+from decouple import config
+from supabase import create_client
+url_user: str = config("SUPABASE_USER_URL")
+key_user: str = config("SUPABASE_USER_KEY")
 
-class SorcesQA():
-    def __init__(self,courseid):
+supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
+
+class SourcesQA():
+    def __init__(self,courseid,id):
         self.courseid=courseid
+        self.id=id
         # Define las variables de entorno aquí o asegúrate de que ya están definidas en el entorno
 
         # Configura DeepLake y la cadena de QA
-        dataset_path = f"hub://SOURCES/{self.courseid}"
+        dataset_path = f"hub://skillstech/PDF-{self.courseid}"
         vectorstore = DeepLake(dataset_path=dataset_path, embedding=OpenAIEmbeddings())
 
         self.qa = RetrievalQAWithSourcesChain.from_chain_type(
@@ -40,4 +47,15 @@ class SorcesQA():
             page_content=document.page_content
             Titulo = document.metadata.get('source', 'No url available.')
             print("Page Content",page_content,"Pagina",source_title,' - ',"Titulo",Titulo)
+
+        response_data = { "sources":[{
+                "url":"www.google.com",
+                "title":result['answer']
+                }
+                ],
+            }
+
+        thread_exists = supabase_user.table("responses_tb").update({"sources":response_data}).eq("id", self.id).execute()
+
+
         return result
