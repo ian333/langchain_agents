@@ -30,7 +30,7 @@ class VideosQA():
         # Define las variables de entorno aquí o asegúrate de que ya están definidas en el entorno
         # Configura DeepLake y la cadena de QA
         dataset_path = f"hub://skillstech/VIDEO-{courseid}"
-        vectorstore = DeepLake(dataset_path=dataset_path, embedding=OpenAIEmbeddings())
+        vectorstore = DeepLake(dataset_path=dataset_path, embedding=OpenAIEmbeddings(),read_only=True)
 
         self.qa = RetrievalQAWithSourcesChain.from_chain_type(
             llm = ChatOpenAI(model="gpt-4-0125-preview", temperature=0),
