@@ -3,9 +3,9 @@
 # langchain
 #from langchain.chains import RetrievalQA
 from langchain.chains import RetrievalQAWithSourcesChain
-from langchain.chat_models import ChatOpenAI
-from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.document_loaders import AssemblyAIAudioTranscriptLoader
+from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import DeepLake # For DeepLake
 from decouple import config
 import os 
