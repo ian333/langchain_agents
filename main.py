@@ -130,10 +130,10 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     # background_tasks.add_task(run_agent,query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
     
     
-    videos=VideosQA(courseid="547fec61-e5ee-450d-9e35-ac4f26b2b02d",id=id)
+    videos=VideosQA(courseid=courseid,id=id)
     background_tasks.add_task(videos.query,query_text=prompt)
 
-    sources=SourcesQA(courseid="547fec61-e5ee-450d-9e35-ac4f26b2b02d",id=id)
+    sources=SourcesQA(courseid=courseid,id=id)
     sources.query(query_text=prompt)
     background_tasks.add_task(sources.query,query_text=prompt)
 

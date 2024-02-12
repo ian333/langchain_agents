@@ -7,6 +7,8 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import DeepLake # For DeepLake
 from decouple import config
+import re
+
 
 # OpenAI
 import os
@@ -21,6 +23,11 @@ url_user: str = config("SUPABASE_USER_URL")
 key_user: str = config("SUPABASE_USER_KEY")
 
 supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
+url_admin: str = config("SUPABASE_ADMIN_URL")
+key_admin: str = config("SUPABASE_ADMIN_KEY")
+
+supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
+bucket_name = "CoursesFiles"
 
 class SourcesQA():
     def __init__(self,courseid,id):
@@ -30,10 +37,10 @@ class SourcesQA():
 
         # Configura DeepLake y la cadena de QA
         dataset_path = f"hub://skillstech/PDF-{self.courseid}"
-        vectorstore = DeepLake(dataset_path=dataset_path, embedding=OpenAIEmbeddings(),read_only=True)
+        vectorstore = DeepLake(dataset_path=dataset_path, embedding=OpenAIEmbeddings(),read_only=True,reset=True)
 
         self.qa = RetrievalQAWithSourcesChain.from_chain_type(
-            llm = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0),
+            llm = ChatOpenAI(model="gpt-4-0125-preview", temperature=0),
             retriever = vectorstore.as_retriever(),
             return_source_documents = True,
             verbose = True,
@@ -41,21 +48,34 @@ class SourcesQA():
     
     def query(self, query_text):
         result = self.qa(query_text)
-        for document in result['source_documents']:
-    # Get the source title and URL from the metadata of each document
-            source_title = document.metadata.get('page', 'No title available.')
-            page_content=document.page_content
-            Titulo = document.metadata.get('source', 'No url available.')
-            print("Page Content",page_content,"Pagina",source_title,' - ',"Titulo",Titulo)
+        sources=[]
+        i=1
+        carpeta="2e2aec92-0980-483e-9edd-05f187d10253"
 
-        response_data = { "sources":[{
-                "url":"www.google.com",
-                "title":result['answer']
-                }
-                ],
-            }
 
-        thread_exists = supabase_user.table("responses_tb").update({"sources":response_data}).eq("id", self.id).execute()
+
+        for results in result["source_documents"]:
+            source=result['source_documents'][0].metadata['source']
+            nombre_libro_regex = re.search(r'/([^/]*)$', source).group(1)
+
+            page=int(result['source_documents'][0].metadata['page'])
+            url=supabase_admin.storage.from_(bucket_name).get_public_url(f'{carpeta}/{nombre_libro_regex}')
+            print(url)
+            print(f"{url}#page={page+1}")
+            sources.append({
+                "url":f"{url}#page={page+1}",
+                "title":results.page_content,
+                "sourceNumber": i}
+                )
+            i+=1
+            
+        data={"sources":sources}
+        try:
+            thread_exists = supabase_user.table("responses_tb").update({"sources":data}).eq("id", self.id).execute()
+        except :
+            pass
+
+        
 
 
         return result

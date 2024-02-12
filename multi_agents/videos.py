@@ -25,26 +25,41 @@ supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
 
 class VideosQA():
     def __init__(self,courseid,id):
+        
         self.courseid=courseid
         self.id=id
+        
         # Define las variables de entorno aquí o asegúrate de que ya están definidas en el entorno
         # Configura DeepLake y la cadena de QA
         dataset_path = f"hub://skillstech/VIDEO-{courseid}"
-        vectorstore = DeepLake(dataset_path=dataset_path, embedding=OpenAIEmbeddings(),read_only=True)
+        try:
 
-        self.qa = RetrievalQAWithSourcesChain.from_chain_type(
-            llm = ChatOpenAI(model="gpt-4-0125-preview", temperature=0),
-            retriever = vectorstore.as_retriever(),
-            return_source_documents = True,
-            verbose = True,
-        )
+            vectorstore = DeepLake(dataset_path=dataset_path, embedding=OpenAIEmbeddings(),read_only=True)
+
+
+
+            self.qa = RetrievalQAWithSourcesChain.from_chain_type(
+                llm = ChatOpenAI(model="gpt-4-0125-preview", temperature=0),
+                retriever = vectorstore.as_retriever(),
+                return_source_documents = True,
+                verbose = True,
+            )
+        except:
+            pass
 
         
     
     def query(self, query_text):
-        result = self.qa(query_text)
+        try:
+            result = self.qa(query_text)
 
+        except :
+            return ""
 
-        thread_exists = supabase_user.table("responses_tb").update({"fact":result["answer"]}).eq("id", self.id).execute()
+        try:
+            thread_exists = supabase_user.table("responses_tb").update({"fact":result["answer"]}).eq("id", self.id).execute()
+        except:
+            pass
+        # thread_exists = supabase_user.table("responses_tb").update({"fact":result["answer"]}).eq("id", self.id).execute()
 
         return result
