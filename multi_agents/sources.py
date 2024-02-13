@@ -56,10 +56,13 @@ class SourcesQA():
 
 
         for results in result["source_documents"]:
-            source=result['source_documents'][0].metadata['source']
+            print(results)
+
+            source=results.metadata['source']
             nombre_libro_regex = re.search(r'/([^/]*)$', source).group(1)
 
-            page=int(result['source_documents'][0].metadata['page'])
+            page=int(results.metadata['page'])
+            print(page)
             url=supabase_admin.storage.from_(bucket_name).get_public_url(f'{carpeta}/{nombre_libro_regex}')
             print(url)
             print(f"{url}#page={page+1}")
