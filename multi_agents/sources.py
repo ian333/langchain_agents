@@ -50,7 +50,7 @@ class SourcesQA():
         result = self.qa(query_text)
         sources=[]
         i=1
-        carpeta="2e2aec92-0980-483e-9edd-05f187d10253"
+        carpeta=self.courseid
 
 
 
