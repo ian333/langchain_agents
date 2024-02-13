@@ -52,6 +52,7 @@ class SourcesQA():
         i=1
         carpeta=self.courseid
 
+        print(result)
 
 
         for results in result["source_documents"]:
