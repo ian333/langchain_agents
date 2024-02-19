@@ -45,34 +45,39 @@ class SourcesQA:
             self.vectorstore_initialized = False
 
     def query(self, query_text):
-        if not self.vectorstore_initialized:
-            print("Base de datos vacía o vectorstore no inicializado correctamente.")
-            return {"error": "Base de datos vacía o vectorstore no inicializado correctamente."}
-
-        result = self.qa(query_text)
-        sources = []
-        i = 1
-        carpeta = self.courseid
-
-        for results in result.get("source_documents", []):
-            source = results.metadata.get('source')
-            nombre_libro_regex = re.search(r'/([^/]*)$', source).group(1) if re.search(r'/([^/]*)$', source) else "Nombre no disponible"
-            page = int(results.metadata.get('page', 0))
-            public_url_response = supabase_admin.storage.from_(bucket_name).get_public_url(f'{carpeta}/{nombre_libro_regex}')
-            url = public_url_response.get('publicURL', 'URL no disponible')
-
-            sources.append({
-                "url": f"{url}#page={page + 1}",
-                "title": results.page_content[:100],  # Primeros 100 caracteres como título
-                "sourceNumber": i
-            })
-            i += 1
-
-        data = {"sources": sources}
         try:
-            thread_exists = supabase_user.table("responses_tb").update({"sources": data}).eq("id", self.id).execute()
-        except Exception as e:
-            print(f"Error al actualizar la base de datos: {e}")
-            pass
+            if not self.vectorstore_initialized:
+                print("Base de datos vacía o vectorstore no inicializado correctamente.")
+                return {"error": "Base de datos vacía o vectorstore no inicializado correctamente."}
 
-        return result if sources else {"error": "No se encontraron documentos."}
+            result = self.qa(query_text)
+            sources = []
+            i = 1
+            carpeta = self.courseid
+
+            for results in result.get("source_documents", []):
+                source = results.metadata.get('source')
+                nombre_libro_regex = re.search(r'/([^/]*)$', source).group(1) if re.search(r'/([^/]*)$', source) else "Nombre no disponible"
+                page = int(results.metadata.get('page', 0))
+                public_url_response = supabase_admin.storage.from_(bucket_name).get_public_url(f'{carpeta}/{nombre_libro_regex}')
+                url = public_url_response.get('publicURL', 'URL no disponible')
+
+                sources.append({
+                    "url": f"{url}#page={page + 1}",
+                    "title": results.page_content[:100],  # Primeros 100 caracteres como título
+                    "sourceNumber": i
+                })
+                i += 1
+
+            data = {"sources": sources}
+            try:
+                thread_exists = supabase_user.table("responses_tb").update({"sources": data}).eq("id", self.id).execute()
+            except Exception as e:
+                print(f"Error al actualizar la base de datos: {e}")
+                pass
+        
+
+            return result if sources else {"error": "No se encontraron documentos."}
+        except:
+
+            return "No se pudo conectar a la base de datos esta vacia"

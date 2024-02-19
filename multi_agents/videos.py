@@ -42,28 +42,33 @@ class VideosQA:
             self.initialized = False
     
     def query(self, query_text):
-        if not self.initialized:
-            return {"error": "VideosQA no inicializado correctamente."}
-
-        result = self.qa(query_text)
-        videos = []
-
-        for document in result.get("source_documents", []):
-            video_id_match = re.search(r"v=([a-zA-Z0-9_-]+)", document.metadata.get('source', ''))
-            if video_id_match:
-                video_id = video_id_match.group(1)
-                thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
-                videos.append({
-                    "url": document.metadata.get('source', ''),
-                    "title": document.metadata.get("title", "Sin título"),
-                    "thumbnailUrl": thumbnail_url
-                })
-
-        data = videos
-
         try:
-            supabase_user.table("responses_tb").update({"videos": data}).eq("id", self.id).execute()
-        except Exception as e:
-            print(f"Error al actualizar la base de datos: {e}")
+            if not self.initialized:
+                return {"error": "VideosQA no inicializado correctamente."}
 
-        return result if videos else {"error": "No se encontraron documentos."}
+            result = self.qa(query_text)
+            videos = []
+
+            for document in result.get("source_documents", []):
+                video_id_match = re.search(r"v=([a-zA-Z0-9_-]+)", document.metadata.get('source', ''))
+                if video_id_match:
+                    video_id = video_id_match.group(1)
+                    thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+                    videos.append({
+                        "url": document.metadata.get('source', ''),
+                        "title": document.metadata.get("title", "Sin título"),
+                        "thumbnailUrl": thumbnail_url
+                    })
+
+            data = videos
+
+            try:
+                supabase_user.table("responses_tb").update({"videos": data}).eq("id", self.id).execute()
+            except Exception as e:
+                print(f"Error al actualizar la base de datos: {e}")
+
+            return result if videos else {"error": "No se encontraron documentos."}
+        except:
+
+            return "No se pudo conectar a la base de datos esta vacia"
+
