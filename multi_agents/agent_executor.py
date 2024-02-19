@@ -67,7 +67,8 @@ def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=Non
         "followup": followup,
         "videos": "",
         "sources": sources,
-        "fact": fact
+        "fact": fact,
+        "memberid":member_id
     }
     
     # Insertar los datos en la tabla responses_tb
