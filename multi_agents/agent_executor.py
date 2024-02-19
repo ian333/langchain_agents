@@ -75,8 +75,6 @@ def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=Non
 
     # response = supabase_user.table("responses_tb").select("*").eq("threadid", "4a37be7f-ce2c-4f19-aaaa-15f6d334a908").execute().data[0]
     response = supabase_user.table("responses_tb").insert(response_data).execute()
-    from multi_agents.videos import VideosQA
-    from multi_agents.sources import SourcesQA
     id=response.data[0]["id"]
 
 #     videos=VideosQA(courseid="547fec61-e5ee-450d-9e35-ac4f26b2b02d",id=id)
