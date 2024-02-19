@@ -40,13 +40,12 @@ def save_followups_to_db(followups, table_name):
 
 def run_follow(query):
     prompt_template = ChatPromptTemplate.from_template(    """
-    Tu trabajo es darme una lista de preguntas relacionadas a {query}.
-    IMPORTANTE -------------------------------
-    Por favor, devuelve solo 4 preguntas en formato de lista separadas por punto y coma (;) de esta manera:
-    Pregunta1;Pregunta2;Pregunta3
-    IMPORTANTE -------------------------------
-    SIGUE LAS INSTRUCCIONES AL PIE DE LA LETRA SEPARADAS POR PUNTO Y COMA                                                                                                          
-
+Your job is to give me a list of questions related to {query}.
+IMPORTANT -------------------------------
+Please, return only 4 questions in list format separated by semicolon (;) in this manner:
+Question1;Question2;Question3;Question4
+IMPORTANT -------------------------------
+FOLLOW THE INSTRUCTIONS TO THE LETTER SEPARATED BY SEMICOLON
     """)
     model = ChatOpenAI(model="gpt-4-0125-preview", temperature=0)
     chain = prompt_template | model
