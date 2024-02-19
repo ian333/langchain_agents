@@ -9,7 +9,12 @@ def process_course_info(course_info):
     general_objective = course_info['general_objective']
     module_objective = course_info['module_objective']
     prerequisites = course_info['prerequisites']
-    categories = ', '.join([category['name'] for category in course_info['categories']['categories']])
+    try:
+        categories = ', '.join([category['name'] for category in course_info['categories']['categories']])
+
+    except:
+        categories=""
+        pass
     reference_videos=course_info['reference_videos']
     
     # Crear un texto descriptivo del curso

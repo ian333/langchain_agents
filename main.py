@@ -14,6 +14,7 @@ from langchain.agents import initialize_agent, AgentType
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.callbacks.streaming_stdout_final_only import FinalStreamingStdOutCallbackHandler
 from langchain_community.chat_models import ChatOpenAI
+from fastapi import status
 
 # Importaciones de utilidades y modelos propios
 from utils.db_utils import save_reminder
@@ -75,7 +76,7 @@ async def create_reminder(reminder_data: dict):
     return {"message": "Recordatorio creado y programado correctamente"}
 
 
-@app.post("/chat")
+@app.post("/chat",status_code=status.HTTP_200_OK)
 async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTasks):
     """
     Endpoint para procesar solicitudes de chat, interactuar con un agente y guardar la información en la base de datos.
