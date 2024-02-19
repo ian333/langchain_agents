@@ -60,7 +60,7 @@ class VideosQA:
                         "thumbnailUrl": thumbnail_url
                     })
 
-            data = videos
+            data = {"videos": data}
 
             try:
                 supabase_user.table("responses_tb").update({"videos": data}).eq("id", self.id).execute()
