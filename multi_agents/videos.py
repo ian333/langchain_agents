@@ -58,7 +58,7 @@ class VideosQA:
                     video_id = video_id_match.group(1)
                     thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
                     videos.append({
-                        "url": url+f"&t={int(document.metadata.get('start',''))/1000}",
+                        "url": url+f"&t={document.metadata.get('start','')}ms",
                         "title": document.metadata.get("title", "Sin título"),
                         "thumbnailUrl": thumbnail_url
                     })
