@@ -65,7 +65,7 @@ def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=Non
         "created_at": datetime.now().isoformat(),
         "answer": answer,
         "followup": followup,
-        "videos": videos,
+        "videos": "",
         "sources": sources,
         "fact": fact
     }
