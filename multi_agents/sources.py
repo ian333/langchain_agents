@@ -78,6 +78,6 @@ class SourcesQA:
         
 
             return result if sources else {"error": "No se encontraron documentos."}
-        except:
+        except Exception as e:
 
             return "No se pudo conectar a la base de datos esta vacia"
