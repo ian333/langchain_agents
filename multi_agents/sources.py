@@ -45,7 +45,7 @@ class SourcesQA:
             self.vectorstore_initialized = False
 
     def query(self, query_text):
-        # try:
+        try:
             if not self.vectorstore_initialized:
                 print("Base de datos vacía o vectorstore no inicializado correctamente.")
                 return {"error": "Base de datos vacía o vectorstore no inicializado correctamente."}
@@ -81,7 +81,7 @@ class SourcesQA:
         
 
             return result if sources else {"error": "No se encontraron documentos."}
-        # except Exception as e:
-        #     print(e)
+        except Exception as e:
+            print(e)
 
-        #     return "No se pudo conectar a la base de datos esta vacia"
+            return "No se pudo conectar a la base de datos esta vacia"
