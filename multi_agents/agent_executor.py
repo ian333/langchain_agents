@@ -20,7 +20,8 @@ from datetime import datetime
 
 def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None):
     # Configurar el prompt y el modelo
-    prompt_template = ChatPromptTemplate.from_template("Este es tu contexto de quien eres{custom_prompt},This is the story of the chat, lo unico que quiero que respondas es user_message {history} esto es para darte contexto de lo que esta pasando, this is the question of the user, solo responde esto {user_message}, return the answer of the user")
+    prompt_template = ChatPromptTemplate.from_template("This is your context of who you are {custom_prompt}, This is the story of the chat, the only thing I want you to answer is user_message {history} this is to give you context of what is happening, this is the question of the user, just answer this {user_message}, return the answer of the user")
+
     model = ChatOpenAI(model="gpt-4-0125-preview", temperature=0)
     chain = prompt_template | model
 
