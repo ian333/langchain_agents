@@ -1,53 +1,48 @@
-from langchain_community.document_loaders import PyPDFLoader
-import tempfile
+import yt_dlp
+from langchain.chains import RetrievalQAWithSourcesChain
+from langchain_openai import ChatOpenAI
+from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
+from langchain_community.document_loaders.assemblyai import TranscriptFormat
+from langchain_openai import OpenAIEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import DeepLake
 import os
-from langchain.schema import Document
+import re
+import assemblyai as aai
+
+import assemblyai as aai
+aai.settings.api_key = "26f195ae63cf434280dd530fb61d6981"
+import yt_dlp
+from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
 from langchain_community.vectorstores import DeepLake
 from langchain_openai import OpenAIEmbeddings
-from decouple import config
-from database.supa import supabase_user,supabase_admin  # Importar los clientes de Supabase
-from supabase import create_client
-from decouple import config
-os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
-os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
-url_admin: str = config("SUPABASE_ADMIN_URL")
-key_admin: str = config("SUPABASE_ADMIN_KEY")
+class YouTubeTranscription:
+    def __init__(self, course_id=None):
+        self.course_id = course_id
+        self.embeddings = OpenAIEmbeddings()
 
-supabase_admin_2 = create_client(supabase_url=url_admin,supabase_key= key_admin)
-admin_data = supabase_admin.table("courses_tb").select("*").eq("id", "ba86e360-577c-4145-baac-974611be0872").execute().data[0]
-admin_data
+    def get_transcript_yt(self, YT_URL):
+        with yt_dlp.YoutubeDL() as ydl:
+            info = ydl.extract_info(YT_URL, download=False)
+            YT_title = info.get('title', None)
+            audio_url = None
+            for format in info["formats"][::-1]:
+                if format["acodec"] != "none":
+                    audio_url = format["url"]
+                    break
+        return YT_URL, YT_title, audio_url
 
-embeddings = OpenAIEmbeddings()
-username_or_org = "<USERNAME_OR_ORG>"
+    def url_to_docs(self, YT_URL, YT_title, audio_url):
+        loader = AssemblyAIAudioTranscriptLoader(audio_url)
+        docs = loader.load_and_split()
+        for doc in docs:
+            doc.metadata = {"source": YT_URL, "title": YT_title}
+        return docs
 
-courseid="73e5618f-e2c0-476e-87d3-43d352f14ee0"
-for file in files:
-    if file["metadata"]["mimetype"]=="application/pdf":
-      file_path = f"{carpeta}/{file['name']}"
-      print(f"Descargando archivo: {file_path}")
-
-      # Descargar el contenido del archivo
-      response = supabase_user.storage.from_(bucket_name).download(file_path)
-      # Crear un directorio temporal
-      temp_dir = tempfile.mkdtemp()
-      temp_file_path = os.path.join(temp_dir, file['name'])
-
-      # Guardar el contenido descargado en un archivo dentro del directorio temporal
-      with open(temp_file_path, 'wb') as temp_file:
-          temp_file.write(response)
-
-      print(f"Archivo temporal creado: {temp_file_path}")
-
-      # Cargar el archivo PDF desde la ruta temporal y procesarlo
-      loader = PyPDFLoader(temp_file.name)
-      pages = loader.load_and_split()
-      print(pages)
-      vectorstore = DeepLake.from_documents(
-      pages,
-      embeddings,
-      dataset_path=f"hub://skillstech/PDF-{courseid}",
-  )
-
-      # Opcional: eliminar el archivo temporal después de procesarlo
-      os.unlink(temp_file.name)
+    def docs_to_deeplakeDB(self, docs):
+        dataset_path = f"hub://skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
+        texts = text_splitter.split_documents(docs)
+        vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=False)
+        vectorstore.add_documents(texts)

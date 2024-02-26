@@ -14,7 +14,7 @@ os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 url_admin: str = config("SUPABASE_ADMIN_URL")
 key_admin: str = config("SUPABASE_ADMIN_KEY")
 
-supabase_admin_2 = create_client(supabase_url=url_admin,supabase_key= key_admin)
+supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
 admin_data = supabase_admin.table("courses_tb").select("*").eq("id", "ba86e360-577c-4145-baac-974611be0872").execute().data[0]
 admin_data
 
