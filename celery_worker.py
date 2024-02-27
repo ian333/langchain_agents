@@ -22,14 +22,14 @@ celery.conf.beat_schedule = {
     #     'task': 'celery_worker.send_learning_progress_checkin',
     #     'schedule': crontab(minute='*/2')
     # },    
-    'check-new-users-every-two-minutes': {
-        'task': 'celery_worker.check_and_register_new_users',
-        'schedule': crontab(minute='*/2')  # Cada 2 minutos para pruebas
-    },
-        'manage-learning-progress-checkin': {
-        'task': 'celery_worker.manage_learning_progress_checkin',
-        'schedule': crontab(minute='*/2')  # Cada 2 minutos para pruebas
-    },
+    # 'check-new-users-every-two-minutes': {
+    #     'task': 'celery_worker.check_and_register_new_users',
+    #     'schedule': crontab(minute='*/2')  # Cada 2 minutos para pruebas
+    # },
+    #     'manage-learning-progress-checkin': {
+    #     'task': 'celery_worker.manage_learning_progress_checkin',
+    #     'schedule': crontab(minute='*/2')  # Cada 2 minutos para pruebas
+    # },
         
         'process_courses': {
         'task': 'process_all_courses',
