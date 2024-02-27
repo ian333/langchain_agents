@@ -10,7 +10,7 @@ from decouple import config
 import datetime
 
 
-supabase = create_client(config("SUPABASE_URL"), config("SUPABASE_KEY"))
+# supabase = create_client(config("SUPABASE_URL"), config("SUPABASE_KEY"))
 
 
 # Configurar Celery con el broker Redis
