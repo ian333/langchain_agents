@@ -29,12 +29,29 @@ celery.conf.beat_schedule = {
         'manage-learning-progress-checkin': {
         'task': 'celery_worker.manage_learning_progress_checkin',
         'schedule': crontab(minute='*/2')  # Cada 2 minutos para pruebas
+    },
+        
+        'process_courses': {
+        'task': 'process_all_courses',
+        'schedule': crontab(minute='*/2')  # Cada 2 minutos para pruebas
     }
 }
 
 
 import pytz  # Asegúrate de tener instalado pytz
 current_date = datetime.datetime.now(datetime.timezone.utc)
+
+
+from celery_functions.PDF_dl_processer import CourseProcessor
+from celery_functions.VIDEO_dl_processer import CourseVideoProcessor
+
+@celery.task
+def process_all_courses():
+    processor = CourseProcessor()
+    processor.process_courses()
+    processor = CourseVideoProcessor()
+    processor.process_all_courses()
+
 
 @celery.task
 def send_reminder_email():
@@ -92,6 +109,7 @@ def check_and_register_new_users():
             supabase.table("reminders_tb").insert(new_reminder).execute()
 
             print(f"Correo de bienvenida enviado a {user_email} y recordatorio creado.")
+
 
 
 

@@ -1,53 +1,79 @@
-from langchain_community.document_loaders import PyPDFLoader
+from supabase import create_client
+from decouple import config
 import tempfile
 import os
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.schema import Document
 from langchain_community.vectorstores import DeepLake
 from langchain_openai import OpenAIEmbeddings
-from decouple import config
-from database.supa import supabase_user,supabase_admin  # Importar los clientes de Supabase
-from supabase import create_client
-from decouple import config
-os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
-os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
-url_admin: str = config("SUPABASE_ADMIN_URL")
-key_admin: str = config("SUPABASE_ADMIN_KEY")
+class CourseProcessor:
+    def __init__(self):
+        os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
+        os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
-supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
-admin_data = supabase_admin.table("courses_tb").select("*").eq("id", "ba86e360-577c-4145-baac-974611be0872").execute().data[0]
-admin_data
+        self.embeddings = OpenAIEmbeddings()
 
-embeddings = OpenAIEmbeddings()
-username_or_org = "<USERNAME_OR_ORG>"
+        url_admin = config("SUPABASE_ADMIN_URL")
+        key_admin = config("SUPABASE_ADMIN_KEY")
+        self.supabase = create_client(supabase_url=url_admin, supabase_key=key_admin)
 
-courseid="73e5618f-e2c0-476e-87d3-43d352f14ee0"
-for file in files:
-    if file["metadata"]["mimetype"]=="application/pdf":
-      file_path = f"{carpeta}/{file['name']}"
-      print(f"Descargando archivo: {file_path}")
+        self.successful_courses = []
+        self.failed_courses = []
 
-      # Descargar el contenido del archivo
-      response = supabase_user.storage.from_(bucket_name).download(file_path)
-      # Crear un directorio temporal
-      temp_dir = tempfile.mkdtemp()
-      temp_file_path = os.path.join(temp_dir, file['name'])
+    def process_courses(self):
+        course_list = self.supabase.table("courses_tb").select("*").execute().data
 
-      # Guardar el contenido descargado en un archivo dentro del directorio temporal
-      with open(temp_file_path, 'wb') as temp_file:
-          temp_file.write(response)
+        for course in course_list:
+            try:
+                self.process_course(course)
+                self.successful_courses.append(f"{course['name']} ({course['id']})")
+            except Exception as e:
+                print(f"Error al procesar el curso {course['name']} ({course['id']}): {str(e)}")
+                self.failed_courses.append(f"{course['name']} ({course['id']}): {str(e)}")
 
-      print(f"Archivo temporal creado: {temp_file_path}")
+        self.generate_report()
 
-      # Cargar el archivo PDF desde la ruta temporal y procesarlo
-      loader = PyPDFLoader(temp_file.name)
-      pages = loader.load_and_split()
-      print(pages)
-      vectorstore = DeepLake.from_documents(
-      pages,
-      embeddings,
-      dataset_path=f"hub://skillstech/PDF-{courseid}",
-  )
+    def process_course(self, course):
+        reference_files = course["reference_files"]
+        courseid = course["id"]
+        if "TRUE"== course["id"]:
+            return " ya se procesaron los archivos "
 
-      # Opcional: eliminar el archivo temporal después de procesarlo
-      os.unlink(temp_file.name)
+        if reference_files and isinstance(reference_files, list):
+            for ref_file in reference_files:
+                for _, value in ref_file.items():
+                    self.download_and_process_file(value, courseid)
+        else:
+            print(f"No hay archivos de referencia para el curso {course['name']} ({course['id']})")
+
+    def download_and_process_file(self, file_path, courseid):
+        folder_name, file_name = file_path.rsplit('/', 1)
+        response = self.supabase.storage.from_("CoursesFiles").download(file_path)
+        temp_dir = tempfile.mkdtemp()
+        temp_file_path = os.path.join(temp_dir, file_name)
+
+        with open(temp_file_path, 'wb') as temp_file:
+            temp_file.write(response)
+
+        self.process_pdf(temp_file_path, courseid)
+        os.unlink(temp_file_path)
+
+    def process_pdf(self, file_path, courseid):
+        loader = PyPDFLoader(file_path)
+        pages = loader.load_and_split()
+        DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub://skillstech/PDF-{courseid}",overwrite=True)
+        self.supabase.table("courses_tb").update({"pdf_processed": "processed"}).eq("id", courseid).execute()
+
+
+    def generate_report(self):
+        print("Reporte de procesamiento de cursos:")
+        print("Cursos procesados exitosamente:")
+        for course in self.successful_courses:
+            print(course)
+
+        print("\nCursos que fallaron al procesarse:")
+        for course in self.failed_courses:
+            print(course)
+
+

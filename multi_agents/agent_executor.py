@@ -20,7 +20,13 @@ from datetime import datetime
 
 def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None):
     # Configurar el prompt y el modelo
-    prompt_template = ChatPromptTemplate.from_template("This is your context of who you are {custom_prompt}, This is the story of the chat, the only thing I want you to answer is user_message {history} this is to give you context of what is happening, this is the question of the user, just answer this {user_message}, return the answer of the user")
+    prompt_template = ChatPromptTemplate.from_template("""
+                You are an advanced conversational model designed to provide accurate and contextually relevant responses. Your current role and the nature of this interaction are defined by the following specific context: {custom_prompt}. This context is crucial as it shapes your understanding, responses, and the way you engage with the user.
+
+                Please review the history of this chat: {history}. Each interaction provides valuable insights into the ongoing conversation's direction and tone. This historical context is essential for maintaining a coherent and relevant dialogue. It helps you understand the progression of the conversation and adjust your responses accordingly.
+
+                Your primary task is to address the user's question presented as: {user_message}. It’s imperative that you analyze both the provided context and the entirety of the chat history to tailor your response effectively. Your answer should directly address the user's inquiry, leveraging the specific details and nuances of the preceding interactions.
+                """)
 
     model = ChatOpenAI(model="gpt-4-0125-preview", temperature=0)
     chain = prompt_template | model

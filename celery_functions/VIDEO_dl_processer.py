@@ -46,3 +46,27 @@ class YouTubeTranscription:
         texts = text_splitter.split_documents(docs)
         vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=False)
         vectorstore.add_documents(texts)
+
+
+from supabase import create_client
+from decouple import config
+
+class CourseVideoProcessor:
+    def __init__(self):
+        url_admin: str = config("SUPABASE_ADMIN_URL")
+        key_admin: str = config("SUPABASE_ADMIN_KEY")
+
+        self.supabase = create_client(supabase_url=url_admin,supabase_key= key_admin)
+
+    def process_all_courses(self):
+        courses_data = self.supabase.table("courses_tb").select("*").execute().data
+        for course in courses_data:
+            if course['reference_videos'] and course['status'] != 'processed':
+                self.transcriber = YouTubeTranscription(course_id=course['id'])
+                for video_url in course['reference_videos']:
+                    if video_url:  # Asegurar que la URL no está vacía
+                        URL, title, audio_url = self.transcriber.get_transcript_yt(video_url)
+                        if URL and title and audio_url:  # Asegurar que todos los componentes son válidos
+                            docs = self.transcriber.url_to_docs(URL, title, audio_url)
+                            self.transcriber.docs_to_deeplakeDB(docs)
+                self.supabase.table("courses_tb").update({"video_processed": "processed"}).eq("id", course['id']).execute()
