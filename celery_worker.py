@@ -33,7 +33,7 @@ celery.conf.beat_schedule = {
         
         'process_courses': {
         'task': 'process_all_courses',
-        'schedule': crontab(minute='*/120')  # Cada 2 minutos para pruebas
+        'schedule': crontab(minute='*/10')  # Cada 2 minutos para pruebas
     }
 }
 

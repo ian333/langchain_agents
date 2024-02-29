@@ -53,7 +53,10 @@ class SourcesQA:
             result = self.qa(query_text)
             sources = []
             i = 1
-            carpeta = self.courseid
+
+            data_course=supabase_admin.table("courses_tb").select("*").eq("id",self.courseid).execute().data
+
+            carpeta = data_course[0]['companyid']
             print(result)
 
             for results in result.get("source_documents", []):
