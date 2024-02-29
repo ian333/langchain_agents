@@ -14,10 +14,10 @@ import datetime
 
 
 # Configurar Celery con el broker Redis
-celery = Celery('reminder_app', broker="redis://localhost:6379/0")
+app = Celery('tasks', broker="redis://localhost:6379/0")
 
 
-celery.conf.beat_schedule = {
+app.conf.beat_schedule = {
     # 'send-reminders-every-morning': {
     #     'task': 'celery_worker.send_learning_progress_checkin',
     #     'schedule': crontab(minute='*/2')
@@ -45,7 +45,7 @@ current_date = datetime.datetime.now(datetime.timezone.utc)
 from celery_functions.PDF_dl_processer import CourseProcessor
 from celery_functions.VIDEO_dl_processer import CourseVideoProcessor
 
-@celery.task
+@app.task
 def process_all_courses():
     processor = CourseProcessor()
     processor.process_courses()
@@ -53,7 +53,7 @@ def process_all_courses():
     processor.process_all_courses()
 
 
-@celery.task
+@app.task
 def send_reminder_email():
 
     send_email(to="sebastian@skills.tech",subject="test",content="Template corre de testing")
@@ -63,7 +63,7 @@ def send_reminder_email():
     return "Se envio el correo"
 
 
-@celery.task
+@app.task
 def send_learning_progress_checkin():
     recordatorios = supabase.table("reminders_tb").select("*").eq("reminder_type", "Learning Progress Check-In").eq("status", "pending").execute().data
 
@@ -76,7 +76,7 @@ def send_learning_progress_checkin():
         print("Se mando email a ")
     
 
-@celery.task
+@app.task
 def check_and_register_new_users():
     # Obtener todos los usuarios de members_tb
     members = supabase.table("members_tb").select("*").execute().data
@@ -115,7 +115,7 @@ def check_and_register_new_users():
 
 
 
-@celery.task
+@app.task
 def manage_learning_progress_checkin():
     current_date = datetime.datetime.now(datetime.timezone.utc)
 
