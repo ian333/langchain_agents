@@ -135,7 +135,7 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     background_tasks.add_task(videos.query,query_text=prompt)
 
     sources=SourcesQA(courseid=courseid,id=id)
-    sources.query(query_text=prompt)
+    # sources.query(query_text=prompt)
     background_tasks.add_task(sources.query,query_text=prompt)
 
     # Insertar o actualizar en Supabase Usuario
