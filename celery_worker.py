@@ -14,7 +14,7 @@ import datetime
 
 
 # Configurar Celery con el broker Redis
-app = Celery('tasks', broker="redis://localhost:6379/0")
+app = Celery('app', broker="redis://localhost:6379/0")
 
 
 app.conf.beat_schedule = {
@@ -32,7 +32,7 @@ app.conf.beat_schedule = {
     # },
         
         'process_courses': {
-        'task': 'process_all_courses',
+        'task': 'app.process_all_courses',
         'schedule': crontab(minute='*/10')  # Cada 2 minutos para pruebas
     }
 }
