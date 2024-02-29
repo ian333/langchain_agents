@@ -45,6 +45,8 @@ url_admin: str = config("SUPABASE_ADMIN_URL")
 key_admin: str = config("SUPABASE_ADMIN_KEY")
 
 supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
+import threading
+
 
 # Configuración de la aplicación FastAPI
 app = FastAPI()

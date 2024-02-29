@@ -33,7 +33,7 @@ app.conf.beat_schedule = {
         
         'process_courses': {
         'task': 'app.process_all_courses',
-        'schedule': crontab(minute='*/10')  # Cada 2 minutos para pruebas
+        'schedule': crontab(minute='*/2')  # Cada 2 minutos para pruebas
     }
 }
 
@@ -47,10 +47,10 @@ from celery_functions.VIDEO_dl_processer import CourseVideoProcessor
 
 @app.task
 def process_all_courses():
-    processor = CourseProcessor()
-    processor.process_courses()
-    processor = CourseVideoProcessor()
-    processor.process_all_courses()
+    processor_pdf = CourseProcessor()
+    processor_pdf.process_courses()
+    processor_video = CourseVideoProcessor()
+    processor_video.process_all_courses()
 
 
 @app.task
