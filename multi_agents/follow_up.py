@@ -47,7 +47,7 @@ def run_follow(query):
         IMPORTANT -------------------------------
         FOLLOW THE INSTRUCTIONS TO THE LETTER SEPARATED BY SEMICOLON
     """)
-    model = ChatOpenAI(model="gpt-4-0125-preview", temperature=0)
+    model = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
     chain = prompt_template | model
 
     result = chain.invoke({"query": query})

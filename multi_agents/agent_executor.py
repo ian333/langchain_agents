@@ -28,7 +28,7 @@ def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_i
                 Your primary task is to address the user's question presented as: {user_message}. It’s imperative that you analyze both the provided context and the entirety of the chat history to tailor your response effectively. Your answer should directly address the user's inquiry, leveraging the specific details and nuances of the preceding interactions.
                 """)
 
-    model = ChatOpenAI(model="gpt-4-0125-preview", temperature=0)
+    model = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
     chain = prompt_template | model
 
     # Crear el contexto y el mensaje del usuario para la consulta
