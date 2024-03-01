@@ -11,24 +11,32 @@ from langchain_community.vectorstores import DeepLake
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
-# Inicialización de clientes Supabase
-url_user = config("SUPABASE_USER_URL")
-key_user = config("SUPABASE_USER_KEY")
-supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
 
-url_admin = config("SUPABASE_ADMIN_URL")
-key_admin = config("SUPABASE_ADMIN_KEY")
-supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
+
+
 
 bucket_name = "CoursesFiles"
 
 class SourcesQA:
+
     def __init__(self, courseid, id):
         self.courseid = courseid
         self.id = id
         self.dataset_path = f"hub://skillstech/PDF-{self.courseid}"
         self.vectorstore_initialized = False
         self.initialize_vectorstore()
+        url_admin = config("SUPABASE_ADMIN_URL")
+        key_admin = config("SUPABASE_ADMIN_KEY")
+        print("------------------------------------------")
+        print("SOURCES 😁")
+        print(key_admin)
+        self.supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
+        print(self.supabase_admin)
+        data_course=self.supabase_admin.table("courses_tb").select("*").eq("id",self.courseid).execute().data
+
+        self.carpeta = data_course[0]['companyid']
+
+
 
     def initialize_vectorstore(self):
         try:
@@ -53,20 +61,17 @@ class SourcesQA:
             result = self.qa(query_text)
             sources = []
             i = 1
-
-            data_course=supabase_admin.table("courses_tb").select("*").eq("id",self.courseid).execute().data
-
-            carpeta = data_course[0]['companyid']
             print(result)
+
+
+
 
             for results in result.get("source_documents", []):
                 source = results.metadata.get('source')
                 nombre_libro_regex = re.search(r'/([^/]*)$', source).group(1) if re.search(r'/([^/]*)$', source) else "Nombre no disponible"
                 page = int(results.metadata.get('page', 0))
-                url = supabase_admin.storage.from_(bucket_name).get_public_url(f'{carpeta}/{nombre_libro_regex}')
-                print(url)
+                url = self.supabase_admin.storage.from_(bucket_name).get_public_url(f'{self.carpeta}/{nombre_libro_regex}')
                 # url = public_url_response.get('publicURL', 'URL no disponible')
-
                 sources.append({
                     "url": f"{url}#page={page + 1}",
                     "title": results.page_content[:100],  # Primeros 100 caracteres como título
@@ -77,7 +82,11 @@ class SourcesQA:
             data = {"sources": sources}
             print(data)
             try:
-                thread_exists = supabase_user.table("responses_tb").update({"sources": data}).eq("id", self.id).execute()
+                        # Inicialización de clientes Supabase
+                url_user = config("SUPABASE_USER_URL")
+                key_user = config("SUPABASE_USER_KEY")
+                self.supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
+                thread_exists = self.supabase_user.table("responses_tb").update({"sources": data}).eq("id", self.id).execute()
             except Exception as e:
                 print(f"Error al actualizar la base de datos: {e}")
                 pass

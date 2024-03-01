@@ -34,6 +34,10 @@ app.conf.beat_schedule = {
         'process_courses': {
         'task': 'app.process_all_courses',
         'schedule': crontab(minute='*/2')  # Cada 2 minutos para pruebas
+    },
+            'process_courses': {
+        'task': 'app.analze',
+        'schedule': crontab(minute='*/60')  # Cada 2 minutos para pruebas
     }
 }
 

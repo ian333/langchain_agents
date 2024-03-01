@@ -141,7 +141,6 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     background_tasks.add_task(sources.query,query_text=prompt)
 
     # Insertar o actualizar en Supabase Usuario
-    # response = supabase_user.table("user_table_name").insert(user_data).execute()
 
     # Devolver la respuesta
     return {"thread_id": threadid}
