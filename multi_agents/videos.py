@@ -11,14 +11,6 @@ from langchain_community.vectorstores import DeepLake
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
-# Inicialización de clientes Supabase
-url_user = config("SUPABASE_USER_URL")
-key_user = config("SUPABASE_USER_KEY")
-supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
-
-url_admin = config("SUPABASE_ADMIN_URL")
-key_admin = config("SUPABASE_ADMIN_KEY")
-supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
 
 bucket_name = "CoursesFiles"
 
@@ -71,6 +63,11 @@ class VideosQA:
             print(data)
 
             try:
+                
+                # Inicialización de clientes Supabase
+                url_user = config("SUPABASE_USER_URL")
+                key_user = config("SUPABASE_USER_KEY")
+                supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
                 supabase_user.table("responses_tb").update({"videos": data}).eq("id", self.id).execute()
             except Exception as e:
                 print(f"Error al actualizar la base de datos: {e}")
