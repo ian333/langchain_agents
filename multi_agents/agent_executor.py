@@ -11,10 +11,14 @@ from decouple import config
 from multi_agents.follow_up import run_follow
 
 import uuid
+import os
+os.environ["FIREWORKS_API_KEY"] = "lAK1dAYkdXGySeddZ8c4VtZnps0gGt0YAa2oGZ33SDqNFsVd"
 
 
 
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_fireworks import Fireworks
+
 from langchain_openai import ChatOpenAI
 from datetime import datetime
 
@@ -42,7 +46,6 @@ def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_i
     id=save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result.content, prompt=query, videos=videos)
 
     return result.content,id
-
 
 
 
@@ -81,16 +84,8 @@ def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=Non
     # Insertar los datos en la tabla responses_tb
     print(response_data)
 
-    # response = supabase_user.table("responses_tb").select("*").eq("threadid", "4a37be7f-ce2c-4f19-aaaa-15f6d334a908").execute().data[0]
     response = supabase_user.table("responses_tb").insert(response_data).execute()
     id=response.data[0]["id"]
-
-#     videos=VideosQA(courseid="547fec61-e5ee-450d-9e35-ac4f26b2b02d",id=id)
-#     videos.query(query_text=prompt)
-# # 
-#     sources=SourcesQA(courseid="547fec61-e5ee-450d-9e35-ac4f26b2b02d",id=id)
-#     sources.query(query_text=prompt)
-
 
     return response.data[0]["id"]
     
