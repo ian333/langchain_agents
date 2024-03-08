@@ -6,6 +6,7 @@ from langchain.chains import RetrievalQAWithSourcesChain
 from langchain_community.chat_models import ChatOpenAI
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import DeepLake
+from langchain_fireworks import Fireworks
 
 # Configuración de variables de entorno
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
@@ -18,12 +19,22 @@ class VideosQA:
     def __init__(self, courseid, id):
         self.courseid = courseid
         self.id = id
+
+    
+    def query(self, query_text):
         try:
             # Intenta configurar DeepLake y la cadena de QA
+            llm = Fireworks(
+                    model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
+                    temperature=0.6,
+                    max_tokens=100,
+                    top_p=1.0,
+                    top_k=40,
+                )
             dataset_path = f"hub://skillstech/VIDEO-{self.courseid}"
             vectorstore = DeepLake(dataset_path=dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
             self.qa = RetrievalQAWithSourcesChain.from_chain_type(
-                llm=ChatOpenAI(model="gpt-4-0125-preview", temperature=0),
+                llm=llm,#ChatOpenAI(model="gpt-4-0125-preview", temperature=0),
                 retriever=vectorstore.as_retriever(),
                 return_source_documents=True,
                 verbose=True,
@@ -32,8 +43,6 @@ class VideosQA:
         except Exception as e:
             print(f"Error al inicializar VideosQA: {e}")
             self.initialized = False
-    
-    def query(self, query_text):
         try:
             if not self.initialized:
                 return {"error": "VideosQA no inicializado correctamente."}

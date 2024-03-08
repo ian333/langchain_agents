@@ -35,9 +35,11 @@ from decouple import config
 # Proyecto Admin
 
 import os
-
+import concurrent.futures
 from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
+
+executor = concurrent.futures.ThreadPoolExecutor()
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 
@@ -134,11 +136,13 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     
     
     videos=VideosQA(courseid=courseid,id=id)
-    background_tasks.add_task(videos.query,query_text=prompt)
-
     sources=SourcesQA(courseid=courseid,id=id)
+    # background_tasks.add_task(videos.query,query_text=prompt)
+    executor.submit(videos.query, prompt)
+    executor.submit(sources.query, prompt)
+
     # sources.query(query_text=prompt)
-    background_tasks.add_task(sources.query,query_text=prompt)
+    # background_tasks.add_task(sources.query,query_text=prompt)
 
     # Insertar o actualizar en Supabase Usuario
 

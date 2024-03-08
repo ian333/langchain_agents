@@ -6,6 +6,7 @@ from langchain.chains import RetrievalQAWithSourcesChain
 from langchain_community.chat_models import ChatOpenAI
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import DeepLake
+from langchain_fireworks import Fireworks
 
 # Configuración de variables de entorno
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
@@ -23,8 +24,7 @@ class SourcesQA:
         self.courseid = courseid
         self.id = id
         self.dataset_path = f"hub://skillstech/PDF-{self.courseid}"
-        self.vectorstore_initialized = False
-        self.initialize_vectorstore()
+
         url_admin = config("SUPABASE_ADMIN_URL")
         key_admin = config("SUPABASE_ADMIN_KEY")
         print("------------------------------------------")
@@ -39,10 +39,18 @@ class SourcesQA:
 
 
     def initialize_vectorstore(self):
+
         try:
+            llm = Fireworks(
+                    model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
+                    temperature=0.6,
+                    max_tokens=100,
+                    top_p=1.0,
+                    top_k=40,
+                )
             vectorstore = DeepLake(dataset_path=self.dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
             self.qa = RetrievalQAWithSourcesChain.from_chain_type(
-                llm=ChatOpenAI(model="gpt-4-0125-preview", temperature=0),
+                llm=llm,#ChatOpenAI(model="gpt-4-0125-preview", temperature=0),
                 retriever=vectorstore.as_retriever(),
                 return_source_documents=True,
                 verbose=True,
@@ -53,10 +61,13 @@ class SourcesQA:
             self.vectorstore_initialized = False
 
     def query(self, query_text):
+        
+        
         try:
-            if not self.vectorstore_initialized:
-                print("Base de datos vacía o vectorstore no inicializado correctamente.")
-                return {"error": "Base de datos vacía o vectorstore no inicializado correctamente."}
+            if self.vectorstore_initialized == False:
+                self.initialize_vectorstore()
+                # print("Base de datos vacía o vectorstore no inicializado correctamente.")
+                # return {"error": "Base de datos vacía o vectorstore no inicializado correctamente."}
 
             result = self.qa(query_text)
             sources = []
