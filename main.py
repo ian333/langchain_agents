@@ -86,6 +86,8 @@ def validate_api_key(request: Request= None):
 
     API_KEY: str = config("API_KEY")
     api_key = request.headers.get(HEADER_NAME)
+    print(API_KEY)
+    print(api_key)
     if api_key != API_KEY:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -150,8 +152,8 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     
     
     with ThreadPoolExecutor() as executor:
-        videos = VideosQA(courseid=courseid, id=threadid)
-        sources = SourcesQA(courseid=courseid, id=threadid)
+        videos = VideosQA(courseid=courseid, id=id)
+        sources = SourcesQA(courseid=courseid, id=id)
         
         # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
         executor.submit(videos.query, prompt)

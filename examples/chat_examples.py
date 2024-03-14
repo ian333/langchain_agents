@@ -57,7 +57,7 @@ curl -X 'POST' \
   'http://localhost:8000/chat' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
-  -H 'X-API-KEY: "e6b44e98-3a5d-4e82-bbcb-428c7012a209"' \
+  -H 'X-API-KEY: e6b44e98-3a5d-4e82-bbcb-428c7012a209' \
   -d '{
   "courseid": "80603fc0-1f06-4489-a33a-6494ea9062e3",
   "memberid": "8b013804-faa6-426e-bfcc-43227f58e3c8",
