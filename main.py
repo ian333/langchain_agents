@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional
 
 # Importaciones de FastAPI
-from fastapi import FastAPI, HTTPException, Request, Body
+from fastapi import FastAPI, HTTPException, Request, Body,Security
 
 # Importaciones de Langchain y herramientas relacionadas
 from langchain_community.llms import OpenAI
@@ -35,10 +35,10 @@ from decouple import config
 # Proyecto Admin
 
 import os
-import concurrent.futures
 from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
 
+import concurrent.futures
 executor = concurrent.futures.ThreadPoolExecutor()
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
@@ -47,7 +47,6 @@ url_admin: str = config("SUPABASE_ADMIN_URL")
 key_admin: str = config("SUPABASE_ADMIN_KEY")
 
 supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
-import threading
 
 
 # Configuración de la aplicación FastAPI
@@ -80,8 +79,24 @@ async def create_reminder(reminder_data: dict):
     return {"message": "Recordatorio creado y programado correctamente"}
 
 
+
+
+
+def validate_api_key(request: Request= None):
+    HEADER_NAME = "X-API-KEY"
+
+    API_KEY: str = config("API_KEY")
+    api_key = request.headers.get(HEADER_NAME)
+    if api_key != API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API Key"
+        )
+    return api_key
+
+
 @app.post("/chat",status_code=status.HTTP_200_OK)
-async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTasks):
+async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTasks,api_key: str = Security(validate_api_key)):
     """
     Endpoint para procesar solicitudes de chat, interactuar con un agente y guardar la información en la base de datos.
 
@@ -148,3 +163,6 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
     # Devolver la respuesta
     return {"thread_id": threadid}
+
+
+
