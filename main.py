@@ -38,8 +38,7 @@ import os
 from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
 
-import concurrent.futures
-executor = concurrent.futures.ThreadPoolExecutor()
+from concurrent.futures import ThreadPoolExecutor
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 
@@ -150,11 +149,13 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     # background_tasks.add_task(run_agent,query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
     
     
-    videos=VideosQA(courseid=courseid,id=id)
-    sources=SourcesQA(courseid=courseid,id=id)
-    # background_tasks.add_task(videos.query,query_text=prompt)
-    executor.submit(videos.query, prompt)
-    executor.submit(sources.query, prompt)
+    with ThreadPoolExecutor() as executor:
+        videos = VideosQA(courseid=courseid, id=threadid)
+        sources = SourcesQA(courseid=courseid, id=threadid)
+        
+        # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
+        executor.submit(videos.query, prompt)
+        executor.submit(sources.query, prompt)
 
     # sources.query(query_text=prompt)
     # background_tasks.add_task(sources.query,query_text=prompt)
@@ -163,6 +164,5 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
     # Devolver la respuesta
     return {"thread_id": threadid}
-
 
 

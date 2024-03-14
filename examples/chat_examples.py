@@ -52,3 +52,23 @@ chat_examples = {
   "prompt": "When was Walmart founded and by whom?",
   "email": "skills.demo@walmart.com"
 }
+"""
+curl -X 'POST' \
+  'http://localhost:8000/chat' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -H 'X-API-KEY: "e6b44e98-3a5d-4e82-bbcb-428c7012a209"' \
+  -d '{
+  "courseid": "80603fc0-1f06-4489-a33a-6494ea9062e3",
+  "memberid": "8b013804-faa6-426e-bfcc-43227f58e3c8",
+  "prompt": "explicame de que sirven las integrales y diferenciales , con algo super entendible .",
+  "threadid": "4a37be7f-ce2c-4f19-aaaa-15f6d334a908",
+  "followup": [
+    {
+      "Answer": "¡Hola! Estoy bien, gracias. ¿Y tú? ¿En qué puedo ayudarte hoy?",
+      "Prompt": "Hola, ¿cómo estás?"
+    }
+  ],
+  "email": "sebastian@skills.tech"
+}'
+"""
