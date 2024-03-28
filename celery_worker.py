@@ -55,6 +55,7 @@ def process_all_courses():
     processor_pdf.process_courses()
     processor_video = CourseVideoProcessor()
     processor_video.process_all_courses()
+    
 
 
 @app.task

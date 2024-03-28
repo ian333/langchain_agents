@@ -3,22 +3,17 @@ from uuid import uuid4  # Importa esta biblioteca en la parte superior de tu arc
 
 # Importaciones de librerías estándar
 from datetime import datetime
-from typing import Optional
 
 # Importaciones de FastAPI
-from fastapi import FastAPI, HTTPException, Request, Body,Security
+from fastapi import FastAPI, HTTPException, Request,Security
 
 # Importaciones de Langchain y herramientas relacionadas
-from langchain_community.llms import OpenAI
 from langchain.agents import initialize_agent, AgentType
-from langchain.memory import ConversationBufferWindowMemory
 from langchain.callbacks.streaming_stdout_final_only import FinalStreamingStdOutCallbackHandler
-from langchain_community.chat_models import ChatOpenAI
 from fastapi import status
 
 # Importaciones de utilidades y modelos propios
 from utils.db_utils import save_reminder
-from utils.email_utils import email_template_user
 from models.chat_models import ChatRequest
 from examples.chat_examples import chat_examples
 from multi_agents.agent_executor import run_agent
@@ -29,7 +24,6 @@ from fastapi import FastAPI, BackgroundTasks
 
 # Importaciones de configuración y utilidades adicionales
 from decouple import config
-import uuid
 from supabase import create_client
 from decouple import config
 # Proyecto Admin
