@@ -109,6 +109,7 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     threadid = request_body.threadid  # Asume que ya viene generado si es necesario
     followup = request_body.followup
     email = request_body.email
+    orgid=request_body.organizationid
     processed_info={}
     reference_videos={}
 
@@ -136,7 +137,9 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
         "threadid": threadid,
         "followup": followup,
         "email": email,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "orgid":orgid
+
     }
     print(user_data)
 
