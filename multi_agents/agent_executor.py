@@ -22,7 +22,7 @@ from langchain_fireworks import Fireworks
 from langchain_openai import ChatOpenAI
 from datetime import datetime
 
-def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None):
+def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None):
     # Configurar el prompt y el modelo
     prompt_template = ChatPromptTemplate.from_template("""
                 You are an advanced conversational model designed to provide accurate and contextually relevant responses. Your current role and the nature of this interaction are defined by the following specific context: {custom_prompt}. This context is crucial as it shapes your understanding, responses, and the way you engage with the user.
@@ -52,17 +52,18 @@ def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_i
     print(result)
     print("-----------------")
     # Guardar la respuesta en la base de datos
-    id=save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos)
+    id=save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid)
 
     return result,id
 
 
 
 
-def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None):
+def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None):
     url_user: str = config("SUPABASE_USER_URL")
     key_user: str = config("SUPABASE_USER_KEY")
     supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
+    
     # Preparar los datos para insertar
     thread_exists = supabase_user.table("threads_tb").select("*").eq("id", thread_id).execute().data
     if not thread_exists:
@@ -87,7 +88,8 @@ def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=Non
         "videos": "",
         "sources": sources,
         "fact": fact,
-        "memberid":member_id
+        "memberid":member_id,
+        "organizationid":orgid
     }
     
     # Insertar los datos en la tabla responses_tb
