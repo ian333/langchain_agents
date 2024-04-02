@@ -21,6 +21,9 @@ from multi_agents.agent_utils import process_course_info
 from starlette.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, BackgroundTasks
 
+from fastapi import Header, Security
+from fastapi.exceptions import HTTPException
+from fastapi.security import OAuth2PasswordBearer
 
 # Importaciones de configuración y utilidades adicionales
 from decouple import config
@@ -73,25 +76,25 @@ async def create_reminder(reminder_data: dict):
 
 
 
-
-
-def validate_api_key(request: Request= None):
-    HEADER_NAME = "X-API-KEY"
+HEADER_NAME = "X-API-KEY"
+api_key_header = Header(HEADER_NAME)
+async def validate_api_key(api_key_header: str = Security(api_key_header)):
 
     API_KEY: str = config("API_KEY")
-    api_key = request.headers.get(HEADER_NAME)
     print(API_KEY)
-    print(api_key)
-    if api_key != API_KEY:
+    print(api_key_header)
+    if api_key_header != API_KEY:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API Key"
         )
-    return api_key
+    return api_key_header
 
+import asyncio
+loop = asyncio.get_event_loop()
 
 @app.post("/chat",status_code=status.HTTP_200_OK)
-async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTasks,api_key: str = Security(validate_api_key)):
+async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTasks,api_key: str = validate_api_key):
     """
     Endpoint para procesar solicitudes de chat, interactuar con un agente y guardar la información en la base de datos.
 
@@ -142,25 +145,35 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
     }
     print(user_data)
+    agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos, orgid=orgid))
 
-    agent,id=run_agent(query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos,orgid=orgid)
+    # await run_agent(query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos,orgid=orgid)
     # background_tasks.add_task(run_agent,query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
-    
-    
-    with ThreadPoolExecutor() as executor:
-        videos = VideosQA(courseid=courseid, id=id)
-        sources = SourcesQA(courseid=courseid, id=id)
-        
-        # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
-        executor.submit(videos.query, prompt)
-        executor.submit(sources.query, prompt)
+    try:
+        with ThreadPoolExecutor() as executor:
+            pass
+            # videos = VideosQA(courseid=courseid, id=id)
+            # sources = SourcesQA(courseid=courseid, id=id)
+            
+            # # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
+            # # executor.submit(videos.query, prompt)
+            # # executor.submit(sources.query, prompt)
+            # video_task = asyncio.create_task(videos.query(prompt))
+            # source_task = asyncio.create_task(sources.query(prompt))
+        # Crea las tareas asíncronas
+
+
+    # Permite que las tareas se ejecuten en segundo plano y continúa con la ejecución
+
 
     # sources.query(query_text=prompt)
     # background_tasks.add_task(sources.query,query_text=prompt)
 
     # Insertar o actualizar en Supabase Usuario
-
+    finally:
     # Devolver la respuesta
-    return {"thread_id": threadid}
+        return {"thread_id": threadid}
+        await agent_task
+
 
 

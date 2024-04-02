@@ -4,7 +4,8 @@ from langchain_openai import ChatOpenAI
 from langchain import hub
 from langchain_core.prompts.chat import ChatPromptTemplate
 from datetime import datetime
-
+from multi_agents.videos import VideosQA
+from multi_agents.sources import SourcesQA
 from supabase import create_client
 from decouple import config
 # Proyecto Admin
@@ -22,7 +23,7 @@ from langchain_fireworks import Fireworks
 from langchain_openai import ChatOpenAI
 from datetime import datetime
 
-def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None):
+async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None):
     # Configurar el prompt y el modelo
     prompt_template = ChatPromptTemplate.from_template("""
                 You are an advanced conversational model designed to provide accurate and contextually relevant responses. Your current role and the nature of this interaction are defined by the following specific context: {custom_prompt}. This context is crucial as it shapes your understanding, responses, and the way you engage with the user.
@@ -48,24 +49,45 @@ def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_i
     # Ejecutar la cadena y obtener el resultado
     result = chain.invoke({"history": history, "user_message": user_message,"custom_prompt":custom_prompt})
     result=result.content
-    print("-----------------")
+    print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
     print(result)
-    print("-----------------")
+    print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
     # Guardar la respuesta en la base de datos
-    id=save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid)
+    id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid)
+    # yield result,id
+    try:
+            print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
+            videos = VideosQA(courseid=courseid, id=id)
+            sources = SourcesQA(courseid=courseid, id=id)
+            
+            # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
+            # executor.submit(videos.query, prompt)
+            # executor.submit(sources.query, prompt)
+            video_task = asyncio.create_task(videos.query(prompt))
+            source_task = asyncio.create_task(sources.query(prompt))
+                # Esperar a que finalicen las tareas
+            await video_task
+            await source_task
+    finally:        
+        pass
+        # return result,id
 
-    return result,id
+
+
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
+loop = asyncio.get_event_loop()
 
 
 
-
-def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None):
+async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None):
     url_user: str = config("SUPABASE_USER_URL")
     key_user: str = config("SUPABASE_USER_KEY")
     supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
     
     # Preparar los datos para insertar
     thread_exists = supabase_user.table("threads_tb").select("*").eq("id", thread_id).execute().data
+
     if not thread_exists:
         thread_data = {
             "id": thread_id,
@@ -73,12 +95,14 @@ def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=Non
             # Añadir aquí más campos si son necesarios, por ejemplo:
             "memberid": member_id,
             "courseid": courseid,
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
+            "organizationid":orgid,
+            "first_response":answer
         }
         print(thread_data)
-        supabase_user.table("threads_tb").insert(thread_data).execute()
+        response=supabase_user.table("threads_tb").insert(thread_data).execute()
 
-    followup=run_follow(prompt)
+    followup=""
     response_data = {
         "threadid": thread_id,
         "prompt": prompt,
@@ -91,12 +115,13 @@ def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=Non
         "memberid":member_id,
         "organizationid":orgid
     }
-    
     # Insertar los datos en la tabla responses_tb
     print(response_data)
-
     response = supabase_user.table("responses_tb").insert(response_data).execute()
     id=response.data[0]["id"]
+    loop.create_task(run_follow(prompt,id=id))
 
-    return response.data[0]["id"]
+
+
+    return id
     

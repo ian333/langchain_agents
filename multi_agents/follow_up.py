@@ -38,7 +38,7 @@ def save_followups_to_db(followups, table_name):
     response = supabase.table(table_name).insert(followups).execute()
     print(response)
 
-def run_follow(query):
+async def run_follow(query,id):
     prompt_template = ChatPromptTemplate.from_template(    """
         Your job is to give me a list of questions related to {query}.
         IMPORTANT -------------------------------
@@ -54,6 +54,10 @@ def run_follow(query):
     print(result.content)
 
     followups = process_questions(result.content)
-    # save_followups_to_db(followups, "your_table_name")
 
+
+    url_user: str = config("SUPABASE_USER_URL")
+    key_user: str = config("SUPABASE_USER_KEY")
+    supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
+    supabase_user.table("responses_tb").update({"followup": followups}).eq("id", id).execute()
     return followups
