@@ -46,6 +46,14 @@ async def run_follow(query,id):
         Question1;Question2;Question3;Question4
         IMPORTANT -------------------------------
         FOLLOW THE INSTRUCTIONS TO THE LETTER SEPARATED BY SEMICOLON
+        #example 1
+        What's the best way to store dried herbs?;What are some low-impact exercises suitable for seniors?;Can you recommend some easy beginner woodworking projects?;Is it possible to propagate succulent plants using leaves?
+
+        #example 2
+        How do I make homemade pasta without a machine?;Which vegetables grow well in containers?;Are there any good online resources for learning new languages?;Should I use oil or butter when cooking with garlic?
+                                                            
+
+                                                       
     """)
     model = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
     chain = prompt_template | model

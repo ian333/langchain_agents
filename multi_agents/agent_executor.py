@@ -53,11 +53,11 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     print(result)
     print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
     # Guardar la respuesta en la base de datos
-    id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid)
+    id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid)
     # yield result,id
     try:
             print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
-            videos = VideosQA(courseid=courseid, id=id)
+            videos = VideosQA(courseid=courseid, id=id,first_response=first_response,thread_id=thread_id)
             sources = SourcesQA(courseid=courseid, id=id)
             
             # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
@@ -84,11 +84,12 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
     url_user: str = config("SUPABASE_USER_URL")
     key_user: str = config("SUPABASE_USER_KEY")
     supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
-    
+    first_response=False
     # Preparar los datos para insertar
     thread_exists = supabase_user.table("threads_tb").select("*").eq("id", thread_id).execute().data
 
     if not thread_exists:
+        first_response=True
         thread_data = {
             "id": thread_id,
             "threadname":prompt,
@@ -101,6 +102,7 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
         }
         print(thread_data)
         response=supabase_user.table("threads_tb").insert(thread_data).execute()
+
 
     followup=""
     response_data = {
@@ -123,5 +125,5 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
 
 
 
-    return id
+    return id,first_response,thread_id
     

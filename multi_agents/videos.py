@@ -16,9 +16,11 @@ os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 bucket_name = "CoursesFiles"
 
 class VideosQA:
-    def __init__(self, courseid, id):
+    def __init__(self, courseid, id,first_response,thread_id):
         self.courseid = courseid
         self.id = id
+        self.first_response=first_response
+        self.thread_id=thread_id
 
     
     def query(self, query_text):
@@ -67,6 +69,8 @@ class VideosQA:
                         "fragment_text":document.page_content
 
                     })
+            
+            
 
             data = {"videos": videos}
             print(data)
@@ -77,6 +81,7 @@ class VideosQA:
                 url_user = config("SUPABASE_USER_URL")
                 key_user = config("SUPABASE_USER_KEY")
                 supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
+                supabase_user.table("threads_tb").update({"thread_img": videos[0]}).eq("id", self.thread_id).execute()
                 supabase_user.table("responses_tb").update({"videos": data}).eq("id", self.id).execute()
             except Exception as e:
                 print(f"Error al actualizar la base de datos: {e}")
