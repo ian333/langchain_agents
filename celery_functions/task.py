@@ -13,7 +13,7 @@ from langchain_community.vectorstores import DeepLake
 from langchain_openai import OpenAIEmbeddings
 import assemblyai as aai
 aai.settings.api_key = "26f195ae63cf434280dd530fb61d6981"
-
+import os 
 
 from decouple import config
 from supabase import create_client
@@ -22,6 +22,7 @@ url_user: str = config("SUPABASE_USER_URL")
 key_user: str = config("SUPABASE_USER_KEY")
 supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
 
+os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
 class YouTubeTranscription:
     def __init__(self, course_id=None):
