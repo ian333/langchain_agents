@@ -51,11 +51,12 @@ jsonpointer==2.4
 jupyter_client==8.6.0
 jupyter_core==5.7.0
 kombu==5.3.4
-langchain==0.1.4
-langchain-community==0.0.19
-langchain-core==0.1.30
+langchain==0.1.15
+langchain-community==0.0.32
+langchain-core==0.1.41
 langchain-fireworks==0.1.1
 langchain-openai==0.0.5
+langchain-text-splitters==0.0.1
 langchainhub==0.1.14
 langsmith==0.1.22
 libdeeplake==0.0.99
