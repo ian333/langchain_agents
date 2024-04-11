@@ -37,24 +37,26 @@ class CourseProcessor:
     def process_course(self, course):
         reference_files = course["reference_files"]
         courseid = course["id"]
-        if "TRUE"== course["id"]:
-            return " ya se procesaron los archivos "
 
-        if reference_files and isinstance(reference_files, list):
+        if reference_files and isinstance(reference_files, list) and course['status'] != 'ready':
             for ref_file in reference_files:
-                for _, value in ref_file.items():
-                    self.download_and_process_file(value, courseid)
+                url = ref_file["url"]
+                name = ref_file["name"]
+                self.download_and_process_file(url, name, courseid)
         else:
             print(f"No hay archivos de referencia para el curso {course['name']} ({course['id']})")
 
-    def download_and_process_file(self, file_path, courseid):
-        folder_name, file_name = file_path.rsplit('/', 1)
-        response = self.supabase.storage.from_("CoursesFiles").download(file_path)
+    def download_and_process_file(self, file_url, file_name, courseid):
+        response = self.supabase.storage.from_("CoursesFiles").download(file_url)
         temp_dir = tempfile.mkdtemp()
         temp_file_path = os.path.join(temp_dir, file_name)
 
         with open(temp_file_path, 'wb') as temp_file:
             temp_file.write(response)
+
+        self.process_pdf(temp_file_path, courseid)
+        os.unlink(temp_file_path)
+
 
         self.process_pdf(temp_file_path, courseid)
         os.unlink(temp_file_path)

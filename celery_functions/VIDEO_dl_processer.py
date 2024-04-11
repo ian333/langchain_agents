@@ -70,3 +70,4 @@ class CourseVideoProcessor:
                             docs = self.transcriber.url_to_docs(URL, title, audio_url)
                             self.transcriber.docs_to_deeplakeDB(docs)
                 self.supabase.table("courses_tb").update({"video_processed": "processed"}).eq("id", course['id']).execute()
+                self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
