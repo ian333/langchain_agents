@@ -91,8 +91,13 @@ class CourseVideoProcessor:
                         if URL and title and audio_url:  # Asegurar que todos los componentes son válidos
                             docs = self.transcriber.url_to_docs(URL, title, audio_url)
                             self.transcriber.docs_to_deeplakeDB(docs)
-                self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
-                self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
+                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video")
+
+                video=self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
+                status=self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
+                print(video)
+                print(status)
+                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE video")
 
 
 from supabase import create_client
@@ -135,7 +140,7 @@ class CourseProcessor:
         reference_files = course["reference_files"]
         courseid = course["id"]
 
-        if reference_files and isinstance(reference_files, list) and course['pdf_processed'] != 'ready':
+        if reference_files and isinstance(reference_files, list) and course['pdf_processed'] != 'TRUE':
             for ref_file in reference_files:
                 url = ref_file["url"]
                 name = ref_file["name"]
@@ -159,8 +164,10 @@ class CourseProcessor:
         loader = PyPDFLoader(file_path)
         pages = loader.load_and_split()
         DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub://skillstech/PDF-{courseid}",overwrite=False)
-        self.supabase.table("courses_tb").update({"pdf_processed": "TRUE"}).eq("id", courseid).execute()
-
+        print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRU PDF")
+        save=self.supabase.table("courses_tb").update({"pdf_processed": "TRUE"}).eq("id", courseid).execute()
+        print(save)
+        print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE PDF")
 
     def generate_report(self):
         print("Reporte de procesamiento de cursos:")
