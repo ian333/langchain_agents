@@ -7,8 +7,8 @@ from celery.schedules import crontab
 import datetime
 
 
-
-app = Celery('celery_worker', broker="redis://localhost:6379/0")
+app = Celery('celery_worker', broker="redis://localhost:6379/0", result_backend="redis://localhost:6379/0")
+# app = Celery('celery_worker', broker="redis://localhost:6379/0")
 
 
 
