@@ -144,7 +144,7 @@ class CourseProcessor:
             for ref_file in reference_files:
                 url = ref_file["url"]
                 name = ref_file["name"]
-                self.download_and_process_file(url, name, courseid)
+                self.download_and_process_file(file_url=url, file_name=name, courseid=courseid)
         else:
             print(f"No hay archivos de referencia para el curso {course['name']} ({course['id']})")
 
@@ -164,7 +164,7 @@ class CourseProcessor:
         loader = PyPDFLoader(file_path)
         pages = loader.load_and_split()
         DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub://skillstech/PDF-{courseid}",overwrite=False)
-        print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRU PDF")
+        print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRU PDF",courseid)
         save=self.supabase.table("courses_tb").update({"pdf_processed": "TRUE"}).eq("id", courseid).execute()
         print(save)
         print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE PDF")
