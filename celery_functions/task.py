@@ -12,11 +12,13 @@ from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
 from langchain_community.vectorstores import DeepLake
 from langchain_openai import OpenAIEmbeddings
 import assemblyai as aai
-aai.settings.api_key = "26f195ae63cf434280dd530fb61d6981"
 import os 
+import json
 
 from decouple import config
 from supabase import create_client
+aai.settings.api_key = "26f195ae63cf434280dd530fb61d6981"
+
 
 url_user: str = config("SUPABASE_USER_URL")
 key_user: str = config("SUPABASE_USER_KEY")
@@ -65,10 +67,18 @@ class YouTubeTranscription:
                 doc.metadata = {"source": YT_URL, "title": YT_title, "start":doc.metadata["start"], "end":doc.metadata["end"]}
         return docs
 
-    def docs_to_deeplakeDB(self, docs):
+    def docs_to_deeplakeDB(self, docs,course_id):
         dataset_path = f"hub://skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
-        texts = text_splitter.split_documents(docs)
+        texts=[]
+        for document in docs:
+            texts.extend(text_splitter.split_documents(document))
+            print(texts)
+                # Convertir la lista a una única cadena JSON
+            documents_str = '\n'.join([json.dumps(doc, indent=None, default=str) for doc in texts])
+
+        self.supabase.table("courses_tb").update({"video_docs_vdb": documents_str}).eq("id", course_id).execute()
+
         vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=False)
         vectorstore.add_documents(texts)
 

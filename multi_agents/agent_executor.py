@@ -11,7 +11,6 @@ from decouple import config
 # Proyecto Admin
 from multi_agents.follow_up import run_follow
 
-import uuid
 import os
 os.environ["FIREWORKS_API_KEY"] =config("FIREWORKS_API_KEY")
 
@@ -22,6 +21,10 @@ from langchain_fireworks import Fireworks
 
 from langchain_openai import ChatOpenAI
 from datetime import datetime
+
+import asyncio
+loop = asyncio.get_event_loop()
+
 
 async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None):
     # Configurar el prompt y el modelo
@@ -61,22 +64,17 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
             sources = SourcesQA(courseid=courseid, id=id)
             
             # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
-            # executor.submit(videos.query, prompt)
-            # executor.submit(sources.query, prompt)
-            video_task = asyncio.create_task(videos.query(prompt))
-            source_task = asyncio.create_task(sources.query(prompt))
+            video_task = await asyncio.create_task(videos.query(prompt))
+            source_task = await asyncio.create_task(sources.query(prompt))
                 # Esperar a que finalicen las tareas
-            await video_task
-            await source_task
+            # await video_task
+            # await source_task
     finally:        
         pass
         # return result,id
 
 
 
-from concurrent.futures import ThreadPoolExecutor
-import asyncio
-loop = asyncio.get_event_loop()
 
 
 

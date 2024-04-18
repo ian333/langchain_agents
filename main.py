@@ -35,7 +35,6 @@ import os
 from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
 
-from concurrent.futures import ThreadPoolExecutor
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 
@@ -147,33 +146,8 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     print(user_data)
     agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos, orgid=orgid))
 
-    # await run_agent(query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos,orgid=orgid)
-    # background_tasks.add_task(run_agent,query=prompt,courseid=courseid,member_id=memberid,custom_prompt=processed_info,prompt=prompt,thread_id=threadid,videos=reference_videos)
-    try:
-        with ThreadPoolExecutor() as executor:
-            pass
-            # videos = VideosQA(courseid=courseid, id=id)
-            # sources = SourcesQA(courseid=courseid, id=id)
-            
-            # # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
-            # # executor.submit(videos.query, prompt)
-            # # executor.submit(sources.query, prompt)
-            # video_task = asyncio.create_task(videos.query(prompt))
-            # source_task = asyncio.create_task(sources.query(prompt))
-        # Crea las tareas asíncronas
 
-
-    # Permite que las tareas se ejecuten en segundo plano y continúa con la ejecución
-
-
-    # sources.query(query_text=prompt)
-    # background_tasks.add_task(sources.query,query_text=prompt)
-
-    # Insertar o actualizar en Supabase Usuario
-    finally:
-    # Devolver la respuesta
-        return {"thread_id": threadid}
-        await agent_task
+    return {"thread_id": threadid}
 
 
 

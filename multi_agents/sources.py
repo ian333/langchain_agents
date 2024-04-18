@@ -3,7 +3,6 @@ import re
 from decouple import config
 from supabase import create_client
 from langchain.chains import RetrievalQAWithSourcesChain
-from langchain_community.chat_models import ChatOpenAI
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import DeepLake
 from langchain_fireworks import Fireworks
@@ -39,7 +38,7 @@ class SourcesQA:
 
 
 
-    def initialize_vectorstore(self):
+    async def initialize_vectorstore(self):
 
         try:
             llm = Fireworks(
@@ -61,12 +60,11 @@ class SourcesQA:
             print(f"Error al inicializar vectorstore: {e}")
             self.vectorstore_initialized = False
 
-    def query(self, query_text):
-        
+    async def query(self, query_text):
         
         try:
             if self.vectorstore_initialized == False:
-                self.initialize_vectorstore()
+                await self.initialize_vectorstore()
                 # print("Base de datos vacía o vectorstore no inicializado correctamente.")
                 # return {"error": "Base de datos vacía o vectorstore no inicializado correctamente."}
 

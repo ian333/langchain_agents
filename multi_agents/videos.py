@@ -3,7 +3,6 @@ import re
 from decouple import config
 from supabase import create_client
 from langchain.chains import RetrievalQAWithSourcesChain
-from langchain_community.chat_models import ChatOpenAI
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import DeepLake
 from langchain_fireworks import Fireworks
@@ -23,7 +22,7 @@ class VideosQA:
         self.thread_id=thread_id
 
     
-    def query(self, query_text):
+    async def query(self, query_text):
         try:
             # Intenta configurar DeepLake y la cadena de QA
             llm = Fireworks(
