@@ -26,10 +26,24 @@ supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
 
 os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
+
+from supabase import create_client
+from decouple import config
+import tempfile
+import os
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.schema import Document
+from langchain_community.vectorstores import DeepLake
+from langchain_openai import OpenAIEmbeddings
+
 class YouTubeTranscription:
     def __init__(self, course_id=None):
         self.course_id = course_id
         self.embeddings = OpenAIEmbeddings()
+        url_admin: str = config("SUPABASE_ADMIN_URL")
+        key_admin: str = config("SUPABASE_ADMIN_KEY")
+
+        self.supabase = create_client(supabase_url=url_admin,supabase_key= key_admin)
 
     def get_transcript_yt(self, YT_URL):
         try:
@@ -71,16 +85,19 @@ class YouTubeTranscription:
         dataset_path = f"hub://skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
         texts=[]
-        for document in docs:
-            texts.extend(text_splitter.split_documents(document))
-            print(texts)
-                # Convertir la lista a una única cadena JSON
-            documents_str = '\n'.join([json.dumps(doc, indent=None, default=str) for doc in texts])
-
+        print(docs)
+        # for document in docs:
+        #     print(document)
+        #     texts.extend(text_splitter.split_documents(document))
+        #     print(texts)
+        #         # Convertir la lista a una única cadena JSON
+        documents_str = '\n'.join([json.dumps(docs, indent=None, default=str)])
+        print(documents_str)
         self.supabase.table("courses_tb").update({"video_docs_vdb": documents_str}).eq("id", course_id).execute()
 
         vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=False)
-        vectorstore.add_documents(texts)
+        vectorstore.add_documents(docs)
+#   "https://www.youtube.com/watch?v=dbQjFzOgpzg"
 
 
 class CourseVideoProcessor:
@@ -100,7 +117,7 @@ class CourseVideoProcessor:
                         URL, title, audio_url = self.transcriber.get_transcript_yt(video_url)
                         if URL and title and audio_url:  # Asegurar que todos los componentes son válidos
                             docs = self.transcriber.url_to_docs(URL, title, audio_url)
-                            self.transcriber.docs_to_deeplakeDB(docs)
+                            self.transcriber.docs_to_deeplakeDB(docs,course_id=course['id'])
                 print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video")
 
                 video=self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
@@ -108,16 +125,33 @@ class CourseVideoProcessor:
                 print(video)
                 print(status)
                 print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE video")
+    
+    def update_all_courses(self):
+        courses_data = self.supabase.table("courses_tb").select("*").execute().data
+        for course in courses_data:
+            if course['videos_to_update']:
+                self.supabase.table("courses_tb").update({"status": "processing"}).eq("id", course['id']).execute()
+                self.transcriber = YouTubeTranscription(course_id=course['id'])
+                for video_url in course['videos_to_update']:
+                    if video_url:  # Asegurar que la URL no está vacía
+                        URL, title, audio_url = self.transcriber.get_transcript_yt(video_url)
+                        if URL and title and audio_url:  # Asegurar que todos los componentes son válidos
+                            docs = self.transcriber.url_to_docs(URL, title, audio_url)
+                            self.transcriber.docs_to_deeplakeDB(docs,course_id=course['id'])
+                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video")
+
+                video=self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
+                status=self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
+                print(video)
+                print(status)
+                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE video")
+    
 
 
-from supabase import create_client
-from decouple import config
-import tempfile
-import os
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.schema import Document
-from langchain_community.vectorstores import DeepLake
-from langchain_openai import OpenAIEmbeddings
+
+
+
+
 
 class CourseProcessor:
     def __init__(self):
@@ -188,6 +222,32 @@ class CourseProcessor:
         print("\nCursos que fallaron al procesarse:")
         for course in self.failed_courses:
             print(course)
+
+    def update_pdf(self):
+        course_list = self.supabase.table("courses_tb").select("*").execute().data
+        for course in course_list:
+            try:
+                reference_files = course["pdf_to_update"]
+                courseid = course["id"]
+                self.supabase.table("courses_tb").update({"status": "processing"}).eq("id", courseid).execute()
+
+
+                if reference_files and isinstance(reference_files, list) and course['pdf_processed'] == 'TRUE':
+                    for ref_file in reference_files:
+                        url = ref_file["url"]
+                        name = ref_file["name"]
+                        self.download_and_process_file(file_url=url, file_name=name, courseid=courseid)
+                else:
+                    print(f"No hay archivos de referencia para el curso {course['name']} ({course['id']})")
+
+                self.successful_courses.append(f"{course['name']} ({course['id']})")
+                self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", courseid).execute()
+                self.supabase.table("courses_tb").update({"pdf_to_update": ""}).eq("id", courseid).execute()
+
+
+            except Exception as e:
+                print(f"Error al procesar el curso {course['name']} ({course['id']}): {str(e)}")
+                self.failed_courses.append(f"{course['name']} ({course['id']}): {str(e)}")
 
 
 
