@@ -112,11 +112,13 @@ class CourseVideoProcessor:
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
             if course['reference_videos'] and course['video_processed'] != 'TRUE':
+                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA PROCESANDO EL video y este es el course id",course['id'])
                 self.transcriber = YouTubeTranscription(course_id=course['id'])
                 for video_url in course['reference_videos']:
                     if video_url:  # Asegurar que la URL no está vacía
                         URL, title, audio_url = self.transcriber.get_transcript_yt(video_url)
                         if URL and title and audio_url:  # Asegurar que todos los componentes son válidos
+                            
                             docs = self.transcriber.url_to_docs(URL, title, audio_url)
                             self.transcriber.docs_to_deeplakeDB(docs,course_id=course['id'])
                 print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video y este es el course id",course['id'])
