@@ -32,8 +32,7 @@ from decouple import config
 # Proyecto Admin
 
 import os
-from multi_agents.videos import VideosQA
-from multi_agents.sources import SourcesQA
+
 
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")

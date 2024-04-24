@@ -61,7 +61,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     try:
             print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
             videos = VideosQA(courseid=courseid, id=id,first_response=first_response,thread_id=thread_id)
-            sources = SourcesQA(courseid=courseid, id=id)
+            sources = SourcesQA(courseid=courseid, id=id,orgid=orgid)
             
             # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
             video_task = await asyncio.create_task(videos.query(prompt))
