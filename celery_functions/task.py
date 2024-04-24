@@ -119,7 +119,7 @@ class CourseVideoProcessor:
                         if URL and title and audio_url:  # Asegurar que todos los componentes son válidos
                             docs = self.transcriber.url_to_docs(URL, title, audio_url)
                             self.transcriber.docs_to_deeplakeDB(docs,course_id=course['id'])
-                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video")
+                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video y este es el course id",course['id'])
 
                 video=self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
                 status=self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
