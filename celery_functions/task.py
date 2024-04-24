@@ -86,6 +86,7 @@ class YouTubeTranscription:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
         texts=[]
         print(docs)
+        print("😁😁😁😁 se esta procesando el curso")
         # for document in docs:
         #     print(document)
         #     texts.extend(text_splitter.split_documents(document))
@@ -141,6 +142,8 @@ class CourseVideoProcessor:
                 print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video")
 
                 video=self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
+                self.supabase.table("courses_tb").update({"videos_to_update": ""}).eq("id", course['id']).execute()
+
                 status=self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
                 print(video)
                 print(status)
@@ -204,14 +207,23 @@ class CourseProcessor:
         os.unlink(temp_file_path)
 
 
-    def process_pdf(self, file_path, courseid):
-        loader = PyPDFLoader(file_path)
-        pages = loader.load_and_split()
+
+    
+
+    def vector_pdf_database(self,courseid,pages):
+
         DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub://skillstech/PDF-{courseid}",overwrite=False)
         print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRU PDF",courseid)
         save=self.supabase.table("courses_tb").update({"pdf_processed": "TRUE"}).eq("id", courseid).execute()
         print(save)
         print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE PDF")
+    
+    
+    def process_pdf(self,  courseid,file_path=None):
+        loader = PyPDFLoader(file_path)
+        pages = loader.load_and_split()
+
+        self.vector_pdf_database(pages=pages,courseid=courseid)
 
     def generate_report(self):
         print("Reporte de procesamiento de cursos:")
@@ -248,6 +260,130 @@ class CourseProcessor:
             except Exception as e:
                 print(f"Error al procesar el curso {course['name']} ({course['id']}): {str(e)}")
                 self.failed_courses.append(f"{course['name']} ({course['id']}): {str(e)}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class CourseFactsProcessor:
+    def __init__(self):
+        os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
+        os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
+
+        self.embeddings = OpenAIEmbeddings()
+
+        url_admin = config("SUPABASE_ADMIN_URL")
+        key_admin = config("SUPABASE_ADMIN_KEY")
+        self.supabase = create_client(supabase_url=url_admin, supabase_key=key_admin)
+
+        self.successful_courses = []
+        self.failed_courses = []
+
+    def process_courses(self):
+        course_list = self.supabase.table("courses_tb").select("*").execute().data
+
+        for course in course_list:
+            try:
+                self.process_course(course)
+                self.successful_courses.append(f"{course['name']} ({course['id']})")
+            except Exception as e:
+                print(f"Error al procesar el curso {course['name']} ({course['id']}): {str(e)}")
+                self.failed_courses.append(f"{course['name']} ({course['id']}): {str(e)}")
+
+        self.generate_report()
+
+    def process_course(self, course):
+        reference_files = course["reference_files"]
+        courseid = course["id"]
+
+        if reference_files and isinstance(reference_files, list) and course['pdf_processed'] != 'TRUE':
+            for ref_file in reference_files:
+                url = ref_file["url"]
+                name = ref_file["name"]
+                self.download_and_process_file(file_url=url, file_name=name, courseid=courseid)
+        else:
+            print(f"No hay archivos de referencia para el curso {course['name']} ({course['id']})")
+
+    def download_and_process_file(self, file_url, file_name, courseid):
+        response = self.supabase.storage.from_("CoursesFiles").download(file_url)
+        temp_dir = tempfile.mkdtemp()
+        temp_file_path = os.path.join(temp_dir, file_name)
+
+        with open(temp_file_path, 'wb') as temp_file:
+            temp_file.write(response)
+
+        self.process_pdf(temp_file_path, courseid)
+        os.unlink(temp_file_path)
+
+
+
+    
+
+    def vector_pdf_database(self,courseid,pages):
+
+        DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub://skillstech/FACTS-{courseid}",overwrite=False)
+        print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRU PDF",courseid)
+        save=self.supabase.table("courses_tb").update({"pdf_processed": "TRUE"}).eq("id", courseid).execute()
+        print(save)
+        print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE PDF")
+    
+    
+    def process_pdf(self,  courseid,file_path=None):
+        loader = PyPDFLoader(file_path)
+        pages = loader.load_and_split()
+
+        self.vector_pdf_database(pages=pages,courseid=courseid)
+
+    def generate_report(self):
+        print("Reporte de procesamiento de cursos:")
+        print("Cursos procesados exitosamente:")
+        for course in self.successful_courses:
+            print(course)
+
+        print("\nCursos que fallaron al procesarse:")
+        for course in self.failed_courses:
+            print(course)
+
+    def update_pdf(self):
+        course_list = self.supabase.table("courses_tb").select("*").execute().data
+        for course in course_list:
+            try:
+                reference_files = course["pdf_to_update"]
+                courseid = course["id"]
+                self.supabase.table("courses_tb").update({"status": "processing"}).eq("id", courseid).execute()
+
+
+                if reference_files and isinstance(reference_files, list) and course['pdf_processed'] == 'TRUE':
+                    for ref_file in reference_files:
+                        url = ref_file["url"]
+                        name = ref_file["name"]
+                        self.download_and_process_file(file_url=url, file_name=name, courseid=courseid)
+                else:
+                    print(f"No hay archivos de referencia para el curso {course['name']} ({course['id']})")
+
+                self.successful_courses.append(f"{course['name']} ({course['id']})")
+                self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", courseid).execute()
+                self.supabase.table("courses_tb").update({"pdf_to_update": ""}).eq("id", courseid).execute()
+
+
+            except Exception as e:
+                print(f"Error al procesar el curso {course['name']} ({course['id']}): {str(e)}")
+                self.failed_courses.append(f"{course['name']} ({course['id']}): {str(e)}")
+
 
 
 
