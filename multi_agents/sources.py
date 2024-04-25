@@ -83,8 +83,8 @@ class SourcesQA:
                 nombre_libro_regex = re.search(r'/([^/]*)$', source).group(1) if re.search(r'/([^/]*)$', source) else "Nombre no disponible"
                 print(nombre_libro_regex)
                 page = int(results.metadata.get('page', 0))
-                url = self.supabase_admin.storage.from_(bucket_name).get_public_url(f'{self.orgid}/{self.carpeta}/{nombre_libro_regex}')
-                # url = public_url_response.get('publicURL', 'URL no disponible')
+                url = self.supabase_admin.storage.from_(bucket_name).get_public_url(f'{self.orgid}/{self.courseid}/{nombre_libro_regex}')
+                print(url)
                 sources.append({
                     "url": f"{url}#page={page + 1}",
                     "title": results.page_content[:100],  # Primeros 100 caracteres como título
