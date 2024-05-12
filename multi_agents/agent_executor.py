@@ -96,7 +96,9 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
             "courseid": courseid,
             "created_at": datetime.now().isoformat(),
             "organizationid":orgid,
-            "first_response":answer
+            "first_response":answer,
+
+
         }
         print(thread_data)
         response=supabase_user.table("threads_tb").insert(thread_data).execute()
@@ -108,18 +110,20 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
         "prompt": prompt,
         "created_at": datetime.now().isoformat(),
         "answer": answer,
-        "followup": followup,
+        "followup":await run_follow(prompt),
         "videos": "",
         "sources": sources,
         "fact": fact,
         "memberid":member_id,
-        "organizationid":orgid
+        "organizationid":orgid,
+        "videos": {},
+        "sources": {"sources": []}
     }
     # Insertar los datos en la tabla responses_tb
     print(response_data)
     response = supabase_user.table("responses_tb").insert(response_data).execute()
     id=response.data[0]["id"]
-    loop.create_task(run_follow(prompt,id=id))
+    
 
 
 

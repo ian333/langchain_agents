@@ -53,12 +53,15 @@ class VideosQA:
             print(result)
 
 
-            for document in result.get("source_documents", []):
+            for document in result.get("source_documents"):
+                print("Estos son los diocumentos",document)
                 video_id_match = re.search(r"v=([a-zA-Z0-9_-]+)", document.metadata.get('source', ''))
                 url=document.metadata.get('source', '')
+                print("video_id_match",video_id_match)
                 if video_id_match:
                     video_id = video_id_match.group(1)
                     thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+                    print("esta es la url del thumbnail",thumbnail_url)
                     start=int(document.metadata.get('start',''))
                     videos.append({
                         "url": url+f"&t={start}ms",
@@ -68,11 +71,12 @@ class VideosQA:
                         "fragment_text":document.page_content
 
                     })
+                    print("Esta es la lista de vidoes",videos)
             
             
 
             data = {"videos": videos}
-            print(data)
+            print("Este es data",data)
 
             try:
                 

@@ -17,12 +17,12 @@ from celery_functions.task import CourseProcessor
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # sender.add_periodic_task(
-    #     crontab(minute="*/20"),
+    #     crontab(minute="*/1"),
     #     process_all_courses.s(),
     #     name="Run periodic transcriptions every 20 minutes.",
     # )
     sender.add_periodic_task(
-        crontab(minute="*/10"),
+        crontab(minute="*/1"),
         update_courses.s(),
         name="update every 20 minutes.",
     )
