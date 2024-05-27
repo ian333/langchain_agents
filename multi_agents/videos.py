@@ -10,6 +10,13 @@ from langchain_fireworks import Fireworks
 # Configuración de variables de entorno
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
+from langchain_google_genai import ChatGoogleGenerativeAI
+### Gemini
+import os
+import google.generativeai as genai
+
+os.environ["GOOGLE_API_KEY"] =config("GOOGLE_API_KEY")
+
 
 
 bucket_name = "CoursesFiles"
@@ -25,13 +32,14 @@ class VideosQA:
     async def query(self, query_text):
         try:
             # Intenta configurar DeepLake y la cadena de QA
-            llm = Fireworks(
-                    model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
-                    temperature=0.6,
-                    max_tokens=100,
-                    top_p=1.0,
-                    top_k=40,
-                )
+            # llm = Fireworks(
+            #         model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
+            #         temperature=0.6,
+            #         max_tokens=100,
+            #         top_p=1.0,
+            #         top_k=40,
+            #     )
+            llm = ChatGoogleGenerativeAI(model="gemini-pro")
             dataset_path = f"hub://skillstech/VIDEO-{self.courseid}"
             vectorstore = DeepLake(dataset_path=dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
             self.qa = RetrievalQAWithSourcesChain.from_chain_type(

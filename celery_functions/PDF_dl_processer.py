@@ -38,7 +38,7 @@ class CourseProcessor:
         reference_files = course["reference_files"]
         courseid = course["id"]
 
-        if reference_files and isinstance(reference_files, list) and course['status'] != 'ready':
+        if reference_files and isinstance(reference_files, list) and course['pdf_processed'] != 'TRUE':
             for ref_file in reference_files:
                 url = ref_file["url"]
                 name = ref_file["name"]
@@ -64,8 +64,8 @@ class CourseProcessor:
     def process_pdf(self, file_path, courseid):
         loader = PyPDFLoader(file_path)
         pages = loader.load_and_split()
-        DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub://skillstech/PDF-{courseid}",overwrite=True)
-        self.supabase.table("courses_tb").update({"pdf_processed": "processed"}).eq("id", courseid).execute()
+        DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub://skillstech/PDF-{courseid}",overwrite=False)
+        self.supabase.table("courses_tb").update({"pdf_processed": "TRUE"}).eq("id", courseid).execute()
 
 
     def generate_report(self):

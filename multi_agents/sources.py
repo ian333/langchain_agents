@@ -12,6 +12,13 @@ os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
 
+from langchain_google_genai import ChatGoogleGenerativeAI
+### Gemini
+import os
+import google.generativeai as genai
+
+os.environ["GOOGLE_API_KEY"] =config("GOOGLE_API_KEY")
+
 
 
 
@@ -43,13 +50,18 @@ class SourcesQA:
     async def initialize_vectorstore(self):
 
         try:
-            llm = Fireworks(
-                    model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
-                    temperature=0.6,
-                    max_tokens=100,
-                    top_p=1.0,
-                    top_k=40,
-                )
+            # llm = Fireworks(
+            #         model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
+            #         temperature=0.6,
+            #         max_tokens=100,
+            #         top_p=1.0,
+            #         top_k=40,
+            #     )
+            #         # Initialize the language model
+            llm = ChatGoogleGenerativeAI(model="gemini-pro")
+
+
+
             vectorstore = DeepLake(dataset_path=self.dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
             self.qa = RetrievalQAWithSourcesChain.from_chain_type(
                 llm=llm,#ChatOpenAI(model="gpt-4-0125-preview", temperature=0),

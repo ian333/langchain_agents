@@ -25,6 +25,13 @@ from datetime import datetime
 import asyncio
 loop = asyncio.get_event_loop()
 
+    ### Gemini
+import os
+import google.generativeai as genai
+
+os.environ["GOOGLE_API_KEY"] = "AIzaSyDqRltPWDD4-HUxSJ9FzkEuCQ3T1F2lqKg"
+from langchain_google_genai import ChatGoogleGenerativeAI
+
 
 async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None):
     # Configurar el prompt y el modelo
@@ -36,15 +43,22 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
                 Your primary task is to address the user's question presented as: {user_message}. It’s imperative that you analyze both the provided context and the entirety of the chat history to tailor your response effectively. Your answer should directly address the user's inquiry, leveraging the specific details and nuances of the preceding interactions.
                 """)
 
-    model = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
-    llm = Fireworks(
-                        model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
-                        temperature=0.6,
-                        max_tokens=100,
-                        top_p=1.0,
-                        top_k=40,
-                    )
-    chain = prompt_template | model
+    # model = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
+    # llm = Fireworks(
+    #                     model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
+    #                     temperature=0.6,
+    #                     max_tokens=100,
+    #                     top_p=1.0,
+    #                     top_k=40,
+    #                 )
+
+
+        # Initialize the language model
+    llm = ChatGoogleGenerativeAI(model="gemini-pro")
+
+
+
+    chain = prompt_template | llm
 
     # Crear el contexto y el mensaje del usuario para la consulta
     user_message = query  # Asumiendo que query contiene el mensaje actual del usuario

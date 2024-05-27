@@ -12,6 +12,12 @@ from supabase import create_client
 from decouple import config
 # Proyecto Admin
 
+    ### Gemini
+import os
+import google.generativeai as genai
+
+os.environ["GOOGLE_API_KEY"] = "AIzaSyDqRltPWDD4-HUxSJ9FzkEuCQ3T1F2lqKg"
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 
@@ -55,8 +61,13 @@ async def run_follow(query,id=None):
 
                                                        
     """)
-    model = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
-    chain = prompt_template | model
+        # Initialize the language model
+    llm = ChatGoogleGenerativeAI(model="gemini-pro")
+
+
+
+    chain = prompt_template | llm
+    
 
     result = chain.invoke({"query": query})
     print(result.content)
