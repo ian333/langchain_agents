@@ -143,7 +143,7 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
     }
     print(user_data)
-    agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos, orgid=orgid))
+    agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid))
 
 
     return {"thread_id": threadid}
