@@ -46,18 +46,19 @@ def save_followups_to_db(followups, table_name):
 
 async def run_follow(query,id=None):
     prompt_template = ChatPromptTemplate.from_template(    """
-        Your job is to give me a list of questions related to {query}.
-        IMPORTANT -------------------------------
-        Please, return only 4 questions in list format separated by semicolon (;) in this manner:
-        Question1;Question2;Question3;Question4
-        IMPORTANT -------------------------------
-        FOLLOW THE INSTRUCTIONS TO THE LETTER SEPARATED BY SEMICOLON
-        #example 1
-        What's the best way to store dried herbs?;What are some low-impact exercises suitable for seniors?;Can you recommend some easy beginner woodworking projects?;Is it possible to propagate succulent plants using leaves?
+Your job is to give me a list of questions related to {query}.
+IMPORTANT -------------------------------
+Please, return only 4 questions in list format separated by semicolon (;) in this manner:
+Question1;Question2;Question3;Question4
+IMPORTANT -------------------------------
+FOLLOW THE INSTRUCTIONS TO THE LETTER SEPARATED BY SEMICOLON
+#example 1
+What's the best way to store dried herbs?;What are some low-impact exercises suitable for seniors?;Can you recommend some easy beginner woodworking projects?;Is it possible to propagate succulent plants using leaves?
 
-        #example 2
-        How do I make homemade pasta without a machine?;Which vegetables grow well in containers?;Are there any good online resources for learning new languages?;Should I use oil or butter when cooking with garlic?
-                                                            
+#example 2
+How do I make homemade pasta without a machine?;Which vegetables grow well in containers?;Are there any good online resources for learning new languages?;Should I use oil or butter when cooking with garlic?
+
+Additionally, please respond in the same language as the query. For example, if the query is in Spanish, your response should also be in Spanish.
 
                                                        
     """)
