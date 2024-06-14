@@ -44,8 +44,9 @@ def save_followups_to_db(followups, table_name):
     response = supabase.table(table_name).insert(followups).execute()
     print(response)
 
-async def run_follow(query,id=None):
+async def run_follow(query,history=None,id=None):
     prompt_template = ChatPromptTemplate.from_template(    """
+                                                       this is the history{history}
 Your job is to give me a list of questions related to {query}.
 IMPORTANT -------------------------------
 Please, return only 4 questions in list format separated by semicolon (;) in this manner:
@@ -70,7 +71,7 @@ Additionally, please respond in the same language as the query. For example, if 
     chain = prompt_template | llm
     
 
-    result = chain.invoke({"query": query})
+    result = chain.invoke({"query": query,"history": history,})
     print(result.content)
 
     followups = process_questions(result.content)

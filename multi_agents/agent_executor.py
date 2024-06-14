@@ -71,7 +71,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     print(result)
     print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
     # Guardar la respuesta en la base de datos
-    id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid)
+    id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid,history=history)
     # yield result,id
     try:
             print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
@@ -93,7 +93,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
 
 
 
-async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None):
+async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None,history=None):
     url_user: str = config("SUPABASE_USER_URL")
     key_user: str = config("SUPABASE_USER_KEY")
     supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
@@ -125,7 +125,7 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
         "prompt": prompt,
         "created_at": datetime.now().isoformat(),
         "answer": answer,
-        "followup":await run_follow(prompt),
+        "followup":await run_follow(prompt=prompt,history=history),
         "videos": "",
         "sources": sources,
         "fact": fact,
