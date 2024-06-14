@@ -67,6 +67,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     result = chain.invoke({"history": history, "user_message": user_message,"custom_prompt":custom_prompt})
     result=result.content
     print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
+    print("Este es el resultado del mensaje",user_message,"Y este es el historial",history)
     print(result)
     print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
     # Guardar la respuesta en la base de datos
