@@ -125,7 +125,7 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
         "prompt": prompt,
         "created_at": datetime.now().isoformat(),
         "answer": answer,
-        "followup":await run_follow(prompt=prompt,history=history),
+        "followup":await run_follow(query=prompt,history=history),
         "videos": "",
         "sources": sources,
         "fact": fact,
