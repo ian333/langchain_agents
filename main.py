@@ -120,6 +120,7 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     # Obtener instrucciones de la empresa desde la tabla de admin
     response = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute()
 
+
     # Verificar si la respuesta tiene datos
     if response.data:
         admin_data = response.data[0]
@@ -130,6 +131,9 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     # Aquí se manejaría la lógica para interactuar con el agente (comentado actualmente)
     # ...
 
+
+    language= supabase_admin.table("companies_tb").select("*").eq("id", orgid).execute()
+    
     # Guardar o actualizar la información en la tabla de usuario
     user_data = {
         "courseid": courseid,

@@ -12,4 +12,6 @@ class ChatRequest(BaseModel):
     followup: Optional[List[Dict[str, str]]] = Field(None, example=[{"Answer": "¡Hola! Estoy bien, gracias. ¿Y tú? ¿En qué puedo ayudarte hoy?", "Prompt": "Hola, ¿cómo estás?"}])
     email: Optional[str] = Field(None, example="sebastian@skills.tech")
     organizationid: Optional[str] = Field(None, example="80603fc0-1f06-4489-a33a-6494ea9142e3")
+    web: Optional[bool] = Field(None, example=False)
+
     

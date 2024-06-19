@@ -31,7 +31,7 @@ import google.generativeai as genai
 
 os.environ["GOOGLE_API_KEY"] = "AIzaSyDqRltPWDD4-HUxSJ9FzkEuCQ3T1F2lqKg"
 from langchain_google_genai import ChatGoogleGenerativeAI
-
+from Prompt_languages import spanish,english
 
 async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None):
     # Configurar el prompt y el modelo
@@ -42,7 +42,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
 
                 Your primary task is to address the user's question presented as: {user_message}. It’s imperative that you analyze both the provided context and the entirety of the chat history to tailor your response effectively. Your answer should directly address the user's inquiry, leveraging the specific details and nuances of the preceding interactions.
                 """)
-
+    spanish.main_prompt
     # model = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
     # llm = Fireworks(
     #                     model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
