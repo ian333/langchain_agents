@@ -42,7 +42,8 @@ key_admin: str = config("SUPABASE_ADMIN_KEY")
 
 supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
 
-global language
+from Config.config import set_language, get_language
+
 
 # Configuración de la aplicación FastAPI
 app = FastAPI()
@@ -112,11 +113,11 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     followup = request_body.followup
     email = request_body.email
     orgid=request_body.organizationid
+    web=request_body.web
+
     processed_info={}
     reference_videos={}
 
-    if not threadid:
-        threadid = str(uuid4())
 
     # Obtener instrucciones de la empresa desde la tabla de admin
     response = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute()
@@ -132,18 +133,17 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
     # Aquí se manejaría la lógica para interactuar con el agente (comentado actualmente)
     # ...
-    
-    language_data=supabase_admin.table("companies_tb").select("*").eq("id", courseid).execute()
+    language_data = supabase_admin.table("companies_tb").select("*").eq("id", courseid).execute()
 
-    if language_data.data: 
-            language_data = language_data.data[0]
-            print("Se definio el lenguaje 😁😁 como",language)
-            print(language_data["language"])
-            language=language_data["language"]
+    if language_data.data:
+        language_data = language_data.data[0]
+        new_language = language_data["language"]
+        set_language(new_language)
+        print("Se definió el lenguaje 😁😁 como", get_language())
     else:
+        set_language("english")
+        print("Se definió el lenguaje 😁😁 como", get_language())
 
-        print("Se definio el lenguaje 😁😁 como",language)
-        language="english"
     # Guardar o actualizar la información en la tabla de usuario
     user_data = {   
         "courseid": courseid,
@@ -157,10 +157,13 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
     }
     print(user_data)
-    agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,language=language))
-
-
-    return {"thread_id": threadid}
-
-
+    
+    
+    if not threadid:
+        threadid = str(uuid4())
+        agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,web=web)
+        return {"thread_id": threadid}
+    else:
+        agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,web=web))
+        return {"thread_id": threadid}
 

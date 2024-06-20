@@ -6,6 +6,7 @@ from langchain_core.prompts.chat import ChatPromptTemplate
 from datetime import datetime
 from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
+from multi_agents.web_search import WebSearch
 from supabase import create_client
 from decouple import config
 # Proyecto Admin
@@ -37,7 +38,8 @@ from Prompt_languages import spanish,english
 from Prompt_languages import english,spanish
 
 
-async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None,language="english"):
+
+async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None,language="english",web=False):
 
     if language=="english":
          main_prompt=english.main_prompt
@@ -64,6 +66,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid,history=history)
     # yield result,id
     try:
+        if web==False:
             print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
             videos = VideosQA(courseid=courseid, id=id,first_response=first_response,thread_id=thread_id)
             sources = SourcesQA(courseid=courseid, id=id,orgid=orgid)
@@ -71,6 +74,12 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
             # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
             video_task = await asyncio.create_task(videos.query(prompt))
             source_task = await asyncio.create_task(sources.query(prompt))
+
+        else:
+            print("------------------------")
+            print("HEY ENTRAMOS A WEB")
+            websearch=WebSearch(courseid=courseid, id=id,orgid=orgid)
+            websearch_task = await asyncio.create_task(websearch.query(prompt))
 
     finally:        
         pass

@@ -50,18 +50,7 @@ class SourcesQA:
     async def initialize_vectorstore(self):
 
         try:
-            # llm = Fireworks(
-            #         model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
-            #         temperature=0.6,
-            #         max_tokens=100,
-            #         top_p=1.0,
-            #         top_k=40,
-            #     )
-            #         # Initialize the language model
             llm = ChatGoogleGenerativeAI(model="gemini-pro")
-
-
-
             vectorstore = DeepLake(dataset_path=self.dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
             self.qa = RetrievalQAWithSourcesChain.from_chain_type(
                 llm=llm,#ChatOpenAI(model="gpt-4-0125-preview", temperature=0),
@@ -79,16 +68,10 @@ class SourcesQA:
         try:
             if self.vectorstore_initialized == False:
                 await self.initialize_vectorstore()
-                # print("Base de datos vacía o vectorstore no inicializado correctamente.")
-                # return {"error": "Base de datos vacía o vectorstore no inicializado correctamente."}
-
             result = self.qa(query_text)
             sources = []
             i = 1
             print(result)
-
-
-
 
             for results in result.get("source_documents", []):
                 source = results.metadata.get('source')
