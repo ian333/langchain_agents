@@ -5,6 +5,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 import json
 import os
+from Config.config import set_language, get_language
+from Prompt_languages import english,spanish
+
 
 class Discovery:
     def __init__(self):
@@ -20,63 +23,12 @@ class Discovery:
         self.llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
         # Definición del prompt
-        self.promptSummary = PromptTemplate.from_template(
-            """
-            Analyze the following course information and categorize it into the given format.
-            {course_information}
-
-            You MUST organize the information into the following structure:
-
-            categories:
-              - name: "Category Name"
-                threads:
-                  - "Thread 1"
-                  - "Thread 2"
-                  - "Thread 3"
-                icon_url: "Icon URL"
-                description: "Description of the category"
-
-            Use the given course details to fill in the following categories: Data Collection, Data Cleaning, Exploratory Data Analysis, Machine Learning, Statistical Analysis, and Big Data Technologies. Include the respective course modules, topics, and descriptions accordingly.
-
-            Here are two examples of the desired output format:
-
-            Example 1:
-            categories:
-              - name: "Data Collection"
-                threads:
-                  - "Survey Design and Sampling Methods"
-                  - "Web Scraping and APIs"
-                  - "Data Storage and Management"
-                icon_url: "https://example.com/icons/data-collection.png"
-                description: "Methods and tools for gathering data"
-              - name: "Data Cleaning"
-                threads:
-                  - "Handling Missing Values"
-                  - "Data Transformation and Normalization"
-                  - "Outlier Detection and Treatment"
-                icon_url: "https://example.com/icons/data-cleaning.png"
-                description: "Preparing raw data for analysis"
-
-            Example 2:
-            categories:
-              - name: "Exploratory Data Analysis"
-                threads:
-                  - "Descriptive Statistics"
-                  - "Data Visualization Techniques"
-                  - "Identifying Patterns and Trends"
-                icon_url: "https://example.com/icons/exploratory-data-analysis.png"
-                description: "Analyzing data to uncover insights"
-              - name: "Machine Learning"
-                threads:
-                  - "Supervised Learning Algorithms"
-                  - "Unsupervised Learning Techniques"
-                  - "Model Evaluation and Validation"
-                icon_url: "https://example.com/icons/machine-learning.png"
-                description: "Building predictive models"
-
-            ALWAYS give me the answer in the specified JSON format.
-            """
-        )
+        language=get_language()
+        if language=="english":
+         discovery=english.discovery
+        elif language=="spanish":
+            discovery=spanish.discovery
+        self.promptSummary = PromptTemplate.from_template(discovery)
 
     def agent_creation(self, course_information):
         """
@@ -108,3 +60,7 @@ class Discovery:
                 print(f"Original response: {response}")
 
             self.supabase.table("courses_tb").update({"categories": data}).eq("id", course["id"]).execute()
+
+
+
+
