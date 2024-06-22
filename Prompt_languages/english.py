@@ -31,7 +31,15 @@ Additionally, please respond in the same language as the query. For example, if 
 discovery=    """
     Analyze the following course information and categorize it into the given format.
     {course_information}
+    this is the user information
+    -----------------
+    {user_information}
 
+    -----
+    tris is the threads metrics
+
+    {thread_metrics}
+    -------------
     You MUST organize the information into the following structure:
 
     categories:

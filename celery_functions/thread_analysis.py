@@ -12,9 +12,9 @@ from Prompt_languages import english,spanish
 class Discovery:
     def __init__(self):
         # Configuración de Supabase
-        url_user = config("SUPABASE_ADMIN_URL")
-        key_user = config("SUPABASE_ADMIN_KEY")
-        self.supabase = create_client(supabase_url=url_user, supabase_key=key_user)
+        url_admin = config("SUPABASE_ADMIN_URL")
+        key_admin = config("SUPABASE_ADMIN_KEY")
+        self.supabase = create_client(supabase_url=url_admin, supabase_key=key_admin)
         url_user: str = config("SUPABASE_USER_URL")
         key_user: str = config("SUPABASE_USER_KEY")
         self.supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
@@ -25,6 +25,7 @@ class Discovery:
         # Inicialización del modelo de lenguaje
         self.llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
+        self.supabase_user.table("courses_tb").update({"categories": data}).eq("id", course["id"]).execute()
 
         # Definición del prompt
         language=get_language()
@@ -34,27 +35,18 @@ class Discovery:
             discovery=spanish.discovery
         self.promptSummary = PromptTemplate.from_template(discovery)
 
-    def agent_creation(self, course_information,user_information,thread_metrics):
+    def agent_creation(self, course_information):
         """
         Summarize conversation using Gemini and a prompt
         """
         chain = self.promptSummary | self.llm
-        result = chain.invoke({"course_information": course_information,"user_information":user_information,"thread_metrics":thread_metrics})
+        result = chain.invoke({"course_information": course_information})
         return result.content
 
     def process_courses(self):
         courses = self.supabase.table('courses_tb').select("*").execute().data
-        
+
         for course in courses:
-            course_info=""
-            tb=self.supabase_user.table("threads_tb").select("*").eq("courseid",course["id"]).execute().data
-            user_data=""
-            thread_metrics=""
-            for data in tb:
-                user_data=user_data+str(data["thread_summary"])
-                thread_metrics=thread_metrics+str(data["thread_metrics"])
-            print(user_data)
-            print(thread_metrics)
             name = str(course.get("name", ""))
             general_objective = str(course.get("general_objective", ""))
             module_objective = str(course.get("module_objective", ""))
@@ -62,7 +54,7 @@ class Discovery:
             
             course_info = name + general_objective + module_objective + syllabus
             print(course_info)
-            response = self.agent_creation(course_information=course_info,user_information=user_data,thread_metrics=thread_metrics)
+            response = self.agent_creation(course_information=course_info)
             response = response.replace('```JSON\n', '').replace('```json\n', '').replace('\n```', '').strip()
 
             try:
