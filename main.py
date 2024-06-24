@@ -3,6 +3,7 @@ from uuid import uuid4  # Importa esta biblioteca en la parte superior de tu arc
 
 # Importaciones de librerías estándar
 from datetime import datetime
+import time
 
 # Importaciones de FastAPI
 from fastapi import FastAPI, HTTPException, Request,Security
@@ -161,7 +162,8 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     
     if not threadid:
         threadid = str(uuid4())
-        agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,web=web)
+        agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,web=web))
+        time.sleep(10)
         return {"thread_id": threadid}
     else:
         agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,web=web))
