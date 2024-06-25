@@ -7,7 +7,7 @@ from datetime import datetime
 from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
 from multi_agents.web_search import WebSearch
-from supabase import create_client
+from supabase import create_client,Client
 from decouple import config
 # Proyecto Admin
 from multi_agents.follow_up import run_follow
@@ -92,7 +92,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
 async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None,history=None):
     url_user: str = config("SUPABASE_USER_URL")
     key_user: str = config("SUPABASE_USER_KEY")
-    supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
+    supabase_user:Client = create_client(supabase_url=url_user,supabase_key= key_user)
     first_response=False
     # Preparar los datos para insertar
     thread_exists = supabase_user.table("threads_tb").select("*").eq("id", thread_id).execute().data
