@@ -1,7 +1,7 @@
 import os
 import re
 from decouple import config
-from supabase import create_client
+from supabase import create_client,Client
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import DeepLake
@@ -91,7 +91,7 @@ class VideosQA:
                 # Inicialización de clientes Supabase
                 url_user = config("SUPABASE_USER_URL")
                 key_user = config("SUPABASE_USER_KEY")
-                supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
+                supabase_user:ClientEEE = create_client(supabase_url=url_user, supabase_key=key_user)
                 supabase_user.table("threads_tb").update({"thread_img": videos[0]}).eq("id", self.thread_id).execute()
                 supabase_user.table("responses_tb").update({"videos": data}).eq("id", self.id).execute()
             except Exception as e:
