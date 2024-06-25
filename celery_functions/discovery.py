@@ -1,6 +1,6 @@
 # archivo: discovery.py
 from decouple import config
-from supabase import create_client
+from supabase import create_client,Client
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 import json
@@ -14,10 +14,10 @@ class Discovery:
         # Configuración de Supabase
         url_user = config("SUPABASE_ADMIN_URL")
         key_user = config("SUPABASE_ADMIN_KEY")
-        self.supabase = create_client(supabase_url=url_user, supabase_key=key_user)
+        self.supabase:Client = create_client(supabase_url=url_user, supabase_key=key_user)
         url_user: str = config("SUPABASE_USER_URL")
         key_user: str = config("SUPABASE_USER_KEY")
-        self.supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
+        self.supabase_user:Client = create_client(supabase_url=url_user,supabase_key= key_user)
 
         # Configuración de la API de Google
         os.environ["GOOGLE_API_KEY"] = config("GOOGLE_API_KEY")
