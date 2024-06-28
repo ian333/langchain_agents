@@ -6,6 +6,16 @@ main_prompt="""
 
                 Your primary task is to address the user's question presented as: {user_message}. It’s imperative that you analyze both the provided context and the entirety of the chat history to tailor your response effectively. Your answer should directly address the user's inquiry, leveraging the specific details and nuances of the preceding interactions.
 
+                    this is the user information
+                    -----------------
+                    {user_information}
+
+                    -----
+                    tris is the threads metrics
+
+                    {thread_metrics}
+                    -------------
+
                 
                 """
 

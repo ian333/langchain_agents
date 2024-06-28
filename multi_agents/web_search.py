@@ -30,26 +30,8 @@ class WebSearch:
     async def query(self,query):
             
         result=self.retriever.invoke(query)
-
-        # prompt = ChatPromptTemplate.from_template(
-        #     """Answer the question based only on the context provided.
-
-        # Context: {context}
-
-        # Question: {question}"""
-        # )
-        # chain = (
-        #     RunnablePassthrough.assign(context=(lambda x: x["question"]) | retriever)
-        #     | prompt
-        #     | ChatOpenAI(model="gpt-4-1106-preview")
-        #     | StrOutputParser()
-        # )
-
-        # chain.invoke({'question':'Who is the president of France?'})
         print(result)
-# Crear una lista para almacenar las fuentes
         sources = []
-
         # Iterar sobre cada documento en el resultado
         for i, doc in enumerate(result, start=1):
             source = doc.metadata.get('source')

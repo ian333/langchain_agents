@@ -35,11 +35,11 @@ class SourcesQA:
 
         url_admin = config("SUPABASE_ADMIN_URL")
         key_admin = config("SUPABASE_ADMIN_KEY")
-        print("------------------------------------------")
-        print("SOURCES 😁")
-        print(key_admin)
+        #print("------------------------------------------")
+        #print("SOURCES 😁")
+        #print(key_admin)
         self.supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
-        print(self.supabase_admin)
+        #print(self.supabase_admin)
         data_course=self.supabase_admin.table("courses_tb").select("*").eq("id",self.courseid).execute().data
 
         self.companyid = data_course[0]['companyid']
@@ -60,7 +60,7 @@ class SourcesQA:
             )
             self.vectorstore_initialized = True
         except Exception as e:
-            print(f"Error al inicializar vectorstore: {e}")
+            #print(f"Error al inicializar vectorstore: {e}")
             self.vectorstore_initialized = False
 
     async def query(self, query_text):
@@ -71,15 +71,15 @@ class SourcesQA:
             result = self.qa(query_text)
             sources = []
             i = 1
-            print(result)
+            #print(result)
 
             for results in result.get("source_documents", []):
                 source = results.metadata.get('source')
                 nombre_libro_regex = re.search(r'/([^/]*)$', source).group(1) if re.search(r'/([^/]*)$', source) else "Nombre no disponible"
-                print(nombre_libro_regex)
+                #print(nombre_libro_regex)
                 page = int(results.metadata.get('page', 0))
                 url = self.supabase_admin.storage.from_(bucket_name).get_public_url(f'{self.orgid}/{self.courseid}/{nombre_libro_regex}')
-                print(url)
+                #print(url)
                 sources.append({
                     "url": f"{url}#page={page + 1}",
                     "title": results.page_content[:100],  # Primeros 100 caracteres como título
@@ -88,7 +88,7 @@ class SourcesQA:
                 i += 1
 
             data = {"sources": sources}
-            print(data)
+            #print(data)
             try:
                         # Inicialización de clientes Supabase
                 url_user = config("SUPABASE_USER_URL")

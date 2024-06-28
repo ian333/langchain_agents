@@ -6,6 +6,22 @@ main_prompt = """
                 Por favor, revisa el historial de este chat: {history}. Cada interacción proporciona información valiosa sobre la dirección y el tono de la conversación en curso. Este contexto histórico es esencial para mantener un diálogo coherente y relevante. Te ayuda a entender la progresión de la conversación y ajustar tus respuestas en consecuencia.
 
                 Tu tarea principal es abordar la pregunta del usuario presentada como: {user_message}. Es imperativo que analices tanto el contexto proporcionado como la totalidad del historial del chat para adaptar tu respuesta de manera efectiva. Tu respuesta debe abordar directamente la consulta del usuario, aprovechando los detalles específicos y matices de las interacciones anteriores.
+                
+                    this is the user information
+                    -----------------
+                    {user_information}
+
+                    -----
+                    tris is the threads metrics
+
+                    {thread_metrics}
+                    -------------
+                
+                
+                
+                
+                
+                
                 """
 
 follow_up = """

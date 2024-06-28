@@ -15,6 +15,7 @@ from multi_agents.follow_up import run_follow
 import os
 os.environ["FIREWORKS_API_KEY"] =config("FIREWORKS_API_KEY")
 
+from database.supa import supabase_admin,supabase_user
 
 
 from langchain_core.prompts import ChatPromptTemplate
@@ -41,6 +42,13 @@ from Prompt_languages import english,spanish
 
 async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None,language="english",web=False):
 
+
+    tb=supabase_user.table("threads_tb").select("*").eq("courseid",courseid).execute().data
+    user_data=""
+    thread_metrics=""
+    for data in tb:
+        user_data=user_data+str(data["thread_summary"])
+        thread_metrics=thread_metrics+str(data["thread_metrics"])
     if language=="english":
          main_prompt=english.main_prompt
     elif language=="spanish":
@@ -49,22 +57,24 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     # Configurar el prompt y el modelo
     prompt_template = ChatPromptTemplate.from_template(main_prompt)
 
-    llm = ChatGoogleGenerativeAI(model="gemini-pro")
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
 
     chain = prompt_template | llm
     # Crear el contexto y el mensaje del usuario para la consulta
     user_message = query  # Asumiendo que query contiene el mensaje actual del usuario
 
     # Ejecutar la cadena y obtener el resultado
-    result = chain.invoke({"history": history, "user_message": user_message,"custom_prompt":custom_prompt})
+    result = chain.invoke({"history": history, "user_message": user_message,"custom_prompt":custom_prompt,"user_information":user_data,"thread_metrics":""})
     result=result.content
     print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
-    print("Este es el resultado del mensaje",user_message,"Y este es el historial",history)
+    # print("Este es el resultado del mensaje",user_message,"Y este es el historial",history)
+    print("Esto es lo que mandamos a la ia 🤖",{"history": history, "user_message": user_message,"custom_prompt":custom_prompt,"user_information":user_data,"thread_metrics":""})
     print(result)
     print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
     # Guardar la respuesta en la base de datos
     id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid,history=history)
     # yield result,id
+
     try:
         if web==False:
             print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
@@ -90,9 +100,6 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
 
 
 async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None,history=None):
-    url_user: str = config("SUPABASE_USER_URL")
-    key_user: str = config("SUPABASE_USER_KEY")
-    supabase_user:Client = create_client(supabase_url=url_user,supabase_key= key_user)
     first_response=False
     # Preparar los datos para insertar
     thread_exists = supabase_user.table("threads_tb").select("*").eq("id", thread_id).execute().data

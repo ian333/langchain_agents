@@ -163,7 +163,7 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     if not threadid:
         threadid = str(uuid4())
         agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,web=web))
-        time.sleep(10)
+        # time.sleep(10)
         return {"thread_id": threadid}
     else:
         agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,web=web))
