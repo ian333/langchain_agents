@@ -82,7 +82,7 @@ class YouTubeTranscription:
         return docs
 
     def docs_to_deeplakeDB(self, docs,course_id):
-        dataset_path = f"hub://skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
+        dataset_path = f"./skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
         texts=[]
         print(docs)
@@ -111,7 +111,8 @@ class CourseVideoProcessor:
     def process_all_courses(self):
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
-            if course['reference_videos'] and course['video_processed'] != 'TRUE':
+
+            if course['reference_videos'] and course['video_processed'] != 'FALSE':
                 print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA PROCESANDO EL video y este es el course id",course['id'])
                 self.transcriber = YouTubeTranscription(course_id=course['id'])
                 for video_url in course['reference_videos']:
@@ -185,7 +186,7 @@ class CourseProcessor:
         reference_files = course["reference_files"]
         courseid = course["id"]
 
-        if reference_files and isinstance(reference_files, list) and course['pdf_processed'] != 'TRUE':
+        if reference_files and isinstance(reference_files, list) and course['pdf_processed'] != 'FALSE':
             for ref_file in reference_files:
                 url = ref_file["url"]
                 name = ref_file["name"]
@@ -217,7 +218,7 @@ class CourseProcessor:
     def vector_pdf_database(self,courseid,pages):
         print("vector_pdf_database")
 
-        DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub://skillstech/PDF-{courseid}",overwrite=False)
+        DeepLake.from_documents(pages, self.embeddings, dataset_path=f"./skillstech/PDF-{courseid}",overwrite=False)
         print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRU PDF",courseid)
         save=self.supabase.table("courses_tb").update({"pdf_processed": "TRUE"}).eq("id", courseid).execute()
         print(save)
