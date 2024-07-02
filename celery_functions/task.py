@@ -15,26 +15,25 @@ import assemblyai as aai
 import os 
 import json
 
+import tempfile
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.schema import Document
+from langchain_community.vectorstores import DeepLake
+from langchain_openai import OpenAIEmbeddings
+
+
 from decouple import config
-from supabase import create_client
+from supabase import create_client, Client
 aai.settings.api_key = "26f195ae63cf434280dd530fb61d6981"
 
 
 url_user: str = config("SUPABASE_USER_URL")
 key_user: str = config("SUPABASE_USER_KEY")
-supabase_user = create_client(supabase_url=url_user,supabase_key= key_user)
+supabase_user:Client = create_client(supabase_url=url_user,supabase_key= key_user)
 
 os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 
 
-from supabase import create_client
-from decouple import config
-import tempfile
-import os
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.schema import Document
-from langchain_community.vectorstores import DeepLake
-from langchain_openai import OpenAIEmbeddings
 
 class YouTubeTranscription:
     def __init__(self, course_id=None):
@@ -43,7 +42,7 @@ class YouTubeTranscription:
         url_admin: str = config("SUPABASE_ADMIN_URL")
         key_admin: str = config("SUPABASE_ADMIN_KEY")
 
-        self.supabase = create_client(supabase_url=url_admin,supabase_key= key_admin)
+        self.supabase:Client = create_client(supabase_url=url_admin,supabase_key= key_admin)
 
     def get_transcript_yt(self, YT_URL):
         try:
@@ -106,7 +105,7 @@ class CourseVideoProcessor:
         url_admin: str = config("SUPABASE_ADMIN_URL")
         key_admin: str = config("SUPABASE_ADMIN_KEY")
 
-        self.supabase = create_client(supabase_url=url_admin,supabase_key= key_admin)
+        self.supabase:Client = create_client(supabase_url=url_admin,supabase_key= key_admin)
 
     def process_all_courses(self):
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
@@ -164,7 +163,7 @@ class CourseProcessor:
 
         url_admin = config("SUPABASE_ADMIN_URL")
         key_admin = config("SUPABASE_ADMIN_KEY")
-        self.supabase = create_client(supabase_url=url_admin, supabase_key=key_admin)
+        self.supabase:Client = create_client(supabase_url=url_admin, supabase_key=key_admin)
 
         self.successful_courses = []
         self.failed_courses = []
@@ -283,7 +282,7 @@ class CourseFactsProcessor:
 
         url_admin = config("SUPABASE_ADMIN_URL")
         key_admin = config("SUPABASE_ADMIN_KEY")
-        self.supabase = create_client(supabase_url=url_admin, supabase_key=key_admin)
+        self.supabase:Client = create_client(supabase_url=url_admin, supabase_key=key_admin)
 
         self.successful_courses = []
         self.failed_courses = []
