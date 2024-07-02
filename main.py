@@ -15,7 +15,7 @@ from fastapi import status
 
 # Importaciones de utilidades y modelos propios
 from utils.db_utils import save_reminder
-from models.chat_models import ChatRequest
+from models.chat_models import ChatRequest,QueryRequest
 from examples.chat_examples import chat_examples
 from multi_agents.agent_executor import run_agent
 from multi_agents.agent_utils import process_course_info  
@@ -48,6 +48,9 @@ from Config.config import set_language, get_language
 
 # Configuración de la aplicación FastAPI
 app = FastAPI()
+from database.Vector_database import VectorDatabaseManager
+vector_db_manager = VectorDatabaseManager()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -171,3 +174,11 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
 
 
+
+
+@app.post("/query/")
+async def query(request: QueryRequest):
+    result = vector_db_manager.query_instance(request.courseid, request.query_text)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result

@@ -32,3 +32,6 @@ class ChatRequest(BaseModel):
 # }
 
     
+class QueryRequest(BaseModel):
+    courseid: str
+    query_text: str
