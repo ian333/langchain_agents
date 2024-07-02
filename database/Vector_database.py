@@ -18,7 +18,7 @@ class PDFQA:
     def __init__(self, courseid, orgid=None):
         self.orgid = orgid
         self.courseid = courseid
-        self.dataset_path = f"hub://skillstech/PDF-{self.courseid}"
+        self.dataset_path = f"./skillstech/PDF-{self.courseid}"
         self.vectorstore_initialized = False
         self.supabase_admin = None
         self.companyid = None
@@ -153,6 +153,7 @@ class VectorDatabaseManager:
         datasets = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
         print(f"Datasets found: {datasets}")
         for dataset in datasets:
+            print(dataset)
             courseid = dataset.split("-")[1]
             if dataset.startswith("PDF"):
                 self.instances[courseid] = PDFQA(courseid)
@@ -166,5 +167,9 @@ class VectorDatabaseManager:
         else:
             return {"error": "No se encontró la instancia para el courseid proporcionado."}
 
+# Ejemplo de uso:
+vector_db_manager = VectorDatabaseManager()
+result = vector_db_manager.query_instance(courseid="0a8b1e63-c1ac-4faf-8ce8-2e8934ebf275", query_text="What is the main topic?")
+print(result)
 
 # Ejemplo de uso:

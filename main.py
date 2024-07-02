@@ -49,8 +49,9 @@ from Config.config import set_language, get_language
 # Configuración de la aplicación FastAPI
 app = FastAPI()
 from database.Vector_database import VectorDatabaseManager
+print("Se estan inicializando las VEctorDatabase")
 vector_db_manager = VectorDatabaseManager()
-
+print("Se estan inicializando las VEctorDatabase")
 
 app.add_middleware(
     CORSMiddleware,
