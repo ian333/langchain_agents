@@ -86,11 +86,7 @@ class YouTubeTranscription:
         texts=[]
         print(docs)
         print("😁😁😁😁 se esta procesando el curso")
-        # for document in docs:
-        #     print(document)
-        #     texts.extend(text_splitter.split_documents(document))
-        #     print(texts)
-        #         # Convertir la lista a una única cadena JSON
+
         documents_str = '\n'.join([json.dumps(docs, indent=None, default=str)])
         print(documents_str)
         self.supabase.table("courses_tb").update({"video_docs_vdb": documents_str}).eq("id", course_id).execute()
