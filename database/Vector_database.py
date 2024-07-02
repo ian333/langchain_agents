@@ -12,6 +12,8 @@ os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 os.environ["GOOGLE_API_KEY"] = config("GOOGLE_API_KEY")
 
+bucket_name = "CoursesFiles"
+
 class PDFQA:
     def __init__(self, courseid, orgid=None):
         self.orgid = orgid
@@ -25,8 +27,11 @@ class PDFQA:
     def initialize_supabase(self):
         url_admin = config("SUPABASE_ADMIN_URL")
         key_admin = config("SUPABASE_ADMIN_KEY")
+        print(f"Connecting to Supabase with URL: {url_admin} and Key: {key_admin[:5]}...")
         self.supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
+        print(f"Fetching data for course ID: {self.courseid}")
         data_course = self.supabase_admin.table("courses_tb").select("*").eq("id", self.courseid).execute().data
+        print(f"Data fetched for course ID {self.courseid}: {data_course}")
         self.companyid = data_course[0]['companyid']
 
     def initialize_vectorstore(self):
@@ -40,6 +45,7 @@ class PDFQA:
                 verbose=True,
             )
             self.vectorstore_initialized = True
+            print(f"Vector store initialized for course ID {self.courseid}")
         except Exception as e:
             print(f"Error al inicializar vectorstore: {e}")
             self.vectorstore_initialized = False
@@ -50,6 +56,7 @@ class PDFQA:
         result = self.qa(query_text)
         sources = []
         i = 1
+        print(f"Query result for course ID {self.courseid}: {result}")
 
         for results in result.get("source_documents", []):
             source = results.metadata.get('source')
@@ -64,11 +71,13 @@ class PDFQA:
             i += 1
 
         data = {"sources": sources}
+        print(f"Sources data to be updated in Supabase for course ID {self.courseid}: {data}")
         try:
             url_user = config("SUPABASE_USER_URL")
             key_user = config("SUPABASE_USER_KEY")
             supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
             supabase_user.table("responses_tb").update({"sources": data}).eq("id", self.courseid).execute()
+            print(f"Supabase updated with sources for course ID {self.courseid}")
         except Exception as e:
             print(f"Error al actualizar la base de datos: {e}")
         
@@ -93,6 +102,7 @@ class VideoQA:
                 verbose=True,
             )
             self.vectorstore_initialized = True
+            print(f"Vector store initialized for course ID {self.courseid}")
         except Exception as e:
             print(f"Error al inicializar vectorstore: {e}")
             self.vectorstore_initialized = False
@@ -102,6 +112,7 @@ class VideoQA:
             self.initialize_vectorstore()
         result = self.qa(query_text)
         videos = []
+        print(f"Query result for course ID {self.courseid}: {result}")
 
         for document in result.get("source_documents", []):
             video_id_match = re.search(r"v=([a-zA-Z0-9_-]+)", document.metadata.get('source', ''))
@@ -119,11 +130,13 @@ class VideoQA:
                 })
 
         data = {"videos": videos}
+        print(f"Videos data to be updated in Supabase for course ID {self.courseid}: {data}")
         try:
             url_user = config("SUPABASE_USER_URL")
             key_user = config("SUPABASE_USER_KEY")
             supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
             supabase_user.table("responses_tb").update({"videos": data}).eq("id", self.courseid).execute()
+            print(f"Supabase updated with videos for course ID {self.courseid}")
         except Exception as e:
             print(f"Error al actualizar la base de datos: {e}")
 
@@ -138,13 +151,14 @@ class VectorDatabaseManager:
     def initialize_all_instances(self):
         path = "./skillstech"
         datasets = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
+        print(f"Datasets found: {datasets}")
         for dataset in datasets:
+            courseid = dataset.split("-")[1]
             if dataset.startswith("PDF"):
-                courseid = dataset.split("-")[1]
                 self.instances[courseid] = PDFQA(courseid)
             elif dataset.startswith("VIDEO"):
-                courseid = dataset.split("-")[1]
                 self.instances[courseid] = VideoQA(courseid)
+        print(f"Initialized instances: {self.instances}")
 
     def query_instance(self, courseid, query_text):
         if courseid in self.instances:
@@ -154,6 +168,3 @@ class VectorDatabaseManager:
 
 
 # Ejemplo de uso:
-vector_db_manager = VectorDatabaseManager()
-result = vector_db_manager.query_instance(courseid="0a8b1e63-c1ac-4faf-8ce8-2e8934ebf275", query_text="What is the main topic?")
-print(result)
