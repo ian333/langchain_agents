@@ -153,12 +153,18 @@ class VectorDatabaseManager:
         datasets = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
         print(f"Datasets found: {datasets}")
         for dataset in datasets:
-            print(dataset)
-            courseid = dataset.split("-")[1]
-            if dataset.startswith("PDF"):
+            print(f"Processing dataset: {dataset}")
+            match = re.match(r'^(PDF|VIDEO)-(.+)$', dataset)
+            if not match:
+                print(f"Skipping invalid dataset name: {dataset}")
+                continue
+            prefix, courseid = match.groups()
+            print(f"Extracted courseid: {courseid}")
+            if prefix == "PDF":
                 self.instances[courseid] = PDFQA(courseid)
-            elif dataset.startswith("VIDEO"):
+            elif prefix == "VIDEO":
                 self.instances[courseid] = VideoQA(courseid)
+
         print(f"Initialized instances: {self.instances}")
 
     def query_instance(self, courseid, query_text):
