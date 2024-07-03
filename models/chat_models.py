@@ -31,8 +31,7 @@ class ChatRequest(BaseModel):
 #   "organizationid": "6c0bfedb-258a-4c77-9bad-b0e87c0d9c98"
 # }
 
-
 class QueryRequest(BaseModel):
-    courseid: str
-    query_text: str
-    type: str  # Puede ser "PDF" o "VIDEO"
+    courseid: str = Field(..., example="78943c8c-7ad3-44ff-a657-5bd143b12499")
+    query_text: str = Field(..., example="What is the main topic?")
+    type: str = Field(..., example="PDF")  # Puede ser "PDF" o "VIDEO"
