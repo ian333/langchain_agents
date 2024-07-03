@@ -49,10 +49,7 @@ from Config.config import set_language, get_language
 
 # Configuración de la aplicación FastAPI
 app = FastAPI()
-from database.Vector_database import VectorDatabaseManager
-print("Se estan inicializando las VEctorDatabase")
-vector_db_manager = VectorDatabaseManager()
-print("Se estan inicializando las VEctorDatabase")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -176,7 +173,10 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
 
 
-
+from database.Vector_database import VectorDatabaseManager
+print("Se estan inicializando las VEctorDatabase")
+vector_db_manager = VectorDatabaseManager()
+print("Se estan inicializando las VEctorDatabase")
 @app.post("/query")
 async def query_database(request: QueryRequest):
     try:
