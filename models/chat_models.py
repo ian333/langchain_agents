@@ -31,7 +31,8 @@ class ChatRequest(BaseModel):
 #   "organizationid": "6c0bfedb-258a-4c77-9bad-b0e87c0d9c98"
 # }
 
-    
+
 class QueryRequest(BaseModel):
     courseid: str
     query_text: str
+    type: str  # Puede ser "PDF" o "VIDEO"

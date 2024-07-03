@@ -161,17 +161,20 @@ class VectorDatabaseManager:
             prefix, courseid = match.groups()
             print(f"Extracted courseid: {courseid}")
             if prefix == "PDF":
-                self.instances[courseid] = PDFQA(courseid)
+                self.instances[f"PDF-{courseid}"] = PDFQA(courseid)
             elif prefix == "VIDEO":
-                self.instances[courseid] = VideoQA(courseid)
-
+                self.instances[f"VIDEO-{courseid}"] = VideoQA(courseid)
         print(f"Initialized instances: {self.instances}")
 
-    def query_instance(self, courseid, query_text):
-        if courseid in self.instances:
-            return self.instances[courseid].query(query_text)
+    async def query_instance(self, courseid: str, query_text: str, type: str):
+        instance_key = f"{type}-{courseid}"
+        if instance_key in self.instances:
+            instance = self.instances[instance_key]
+            result = await instance.query(query_text)
+            return result
         else:
-            return {"error": "No se encontró la instancia para el courseid proporcionado."}
+            return {"error": f"No instance found for {type}-{courseid}"}
+
 
 # # Ejemplo de uso:
 # vector_db_manager = VectorDatabaseManager()
