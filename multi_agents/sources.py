@@ -32,6 +32,8 @@ class SourcesQA:
         try:
             # Realizar la solicitud al nuevo servidor de bases de datos vectorizadas
             api_url = "https://34.46.119.67/query"  # Añadir http://
+            api_url = "http://127.0.0.1:8000/query"  # Añadir http://127.0.0.1:8000/
+
             payload = {
                 "courseid": self.courseid,
                 "query_text": query_text,

@@ -11,6 +11,7 @@ os.environ["GOOGLE_API_KEY"] = config("GOOGLE_API_KEY")
 
 bucket_name = "CoursesFiles"
 import httpx
+from database.supa import supabase_admin,supabase_user
 
 class VideosQA:
     def __init__(self, courseid, id, first_response, thread_id):
@@ -22,7 +23,8 @@ class VideosQA:
     async def query(self, query_text):
         try:
             # Realizar la solicitud al nuevo servidor de bases de datos vectorizadas
-            api_url = "https://34.46.119.67/query"  # Añadir http://
+            api_url = "https://34.46.119.67/query"  # Añadir http://127.0.0.1:8000/
+            api_url = "http://127.0.0.1:8000/query"  # Añadir http://127.0.0.1:8000/
             payload = {
                 "courseid": self.courseid,
                 "query_text": query_text,
@@ -55,9 +57,7 @@ class VideosQA:
             print(f"Videos data to be updated in Supabase for course ID {self.courseid}: {data}")
 
             try:
-                url_user = config("SUPABASE_USER_URL")
-                key_user = config("SUPABASE_USER_KEY")
-                supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
+
                 supabase_user.table("threads_tb").update({"thread_img": videos[0]}).eq("id", self.thread_id).execute()
                 supabase_user.table("responses_tb").update({"videos": data}).eq("id", self.id).execute()
                 print(f"Supabase updated with videos for course ID {self.courseid}")

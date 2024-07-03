@@ -29,7 +29,6 @@ from fastapi.security import OAuth2PasswordBearer
 # Importaciones de configuración y utilidades adicionales
 from decouple import config
 from supabase import create_client
-from decouple import config
 # Proyecto Admin
 
 import os
@@ -134,7 +133,7 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     if response.data:
         admin_data = response.data[0]
     
-        print(admin_data)
+        # print(admin_data)
         processed_info,reference_videos = process_course_info(admin_data)
         print(processed_info)
 

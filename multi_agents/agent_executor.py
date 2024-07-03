@@ -42,6 +42,11 @@ from Prompt_languages import english,spanish
 
 async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None,language="english",web=False):
 
+    # Proyecto Usuario
+    url_user: str = config("SUPABASE_USER_URL")
+    key_user: str = config("SUPABASE_USER_KEY")
+    supabase_user:Client= create_client(supabase_url=url_user,supabase_key= key_user)
+
 
     tb=supabase_user.table("threads_tb").select("*").eq("courseid",courseid).execute().data
     user_data=""
