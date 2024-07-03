@@ -31,17 +31,17 @@ class SourcesQA:
     async def query(self, query_text):
         try:
             # Realizar la solicitud al nuevo servidor de bases de datos vectorizadas
-            api_url = "http://localhost:8000/query"  # Añadir http://
+            api_url = "https://34.46.119.67/query"  # Añadir http://
             payload = {
                 "courseid": self.courseid,
                 "query_text": query_text,
                 "type": "PDF"  # O "VIDEO" según corresponda
             }
             print(f"Sending request to {api_url} with payload: {payload}")
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(verify=False) as client:
                 response = await client.post(api_url, json=payload)
-            response.raise_for_status()
-            result = response.json()
+                response.raise_for_status()
+                result = response.json()
             print(f"Received response: {result}")
             
             sources = []

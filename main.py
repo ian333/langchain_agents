@@ -33,7 +33,9 @@ from decouple import config
 # Proyecto Admin
 
 import os
+from langchain.globals import set_debug
 
+set_debug(True)
 
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
