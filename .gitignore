@@ -184,7 +184,7 @@ skillstech/
 skillstech/
 
 # Ignore environment variable files (common practice)
-.env
+# .env
 
 # Ignore log files
 *.log
