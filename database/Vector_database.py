@@ -31,7 +31,7 @@ class PDFQA:
         self.supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
         print(f"Fetching data for course ID: {self.courseid}")
         data_course = self.supabase_admin.table("courses_tb").select("*").eq("id", self.courseid).execute().data
-        print(f"Data fetched for course ID {self.courseid}: {data_course}")
+        # print(f"Data fetched for course ID {self.courseid}: {data_course}")
         self.companyid = data_course[0]['companyid']
 
     def initialize_vectorstore(self):
@@ -54,34 +54,8 @@ class PDFQA:
         if not self.vectorstore_initialized:
             self.initialize_vectorstore()
         result = self.qa(query_text)
-        sources = []
-        i = 1
-        print(f"Query result for course ID {self.courseid}: {result}")
 
-        for results in result.get("source_documents", []):
-            source = results.metadata.get('source')
-            nombre_libro_regex = re.search(r'/([^/]*)$', source).group(1) if re.search(r'/([^/]*)$', source) else "Nombre no disponible"
-            page = int(results.metadata.get('page', 0))
-            url = self.supabase_admin.storage.from_(bucket_name).get_public_url(f'{self.orgid}/{self.courseid}/{nombre_libro_regex}')
-            sources.append({
-                "url": f"{url}#page={page + 1}",
-                "title": results.page_content[:100],  # Primeros 100 caracteres como título
-                "sourceNumber": i
-            })
-            i += 1
-
-        data = {"sources": sources}
-        print(f"Sources data to be updated in Supabase for course ID {self.courseid}: {data}")
-        try:
-            url_user = config("SUPABASE_USER_URL")
-            key_user = config("SUPABASE_USER_KEY")
-            supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
-            supabase_user.table("responses_tb").update({"sources": data}).eq("id", self.courseid).execute()
-            print(f"Supabase updated with sources for course ID {self.courseid}")
-        except Exception as e:
-            print(f"Error al actualizar la base de datos: {e}")
-        
-        return result if sources else {"error": "No se encontraron documentos."}
+        return result 
 
 
 class VideoQA:
@@ -111,36 +85,8 @@ class VideoQA:
         if not self.vectorstore_initialized:
             self.initialize_vectorstore()
         result = self.qa(query_text)
-        videos = []
-        print(f"Query result for course ID {self.courseid}: {result}")
-
-        for document in result.get("source_documents", []):
-            video_id_match = re.search(r"v=([a-zA-Z0-9_-]+)", document.metadata.get('source', ''))
-            url = document.metadata.get('source', '')
-            if video_id_match:
-                video_id = video_id_match.group(1)
-                thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
-                start = int(document.metadata.get('start', ''))
-                videos.append({
-                    "url": url + f"&t={start}ms",
-                    "title": document.metadata.get("title", "Sin título"),
-                    "thumbnailUrl": thumbnail_url,
-                    "time": (start / 1000),
-                    "fragment_text": document.page_content
-                })
-
-        data = {"videos": videos}
-        print(f"Videos data to be updated in Supabase for course ID {self.courseid}: {data}")
-        try:
-            url_user = config("SUPABASE_USER_URL")
-            key_user = config("SUPABASE_USER_KEY")
-            supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
-            supabase_user.table("responses_tb").update({"videos": data}).eq("id", self.courseid).execute()
-            print(f"Supabase updated with videos for course ID {self.courseid}")
-        except Exception as e:
-            print(f"Error al actualizar la base de datos: {e}")
-
-        return result if videos else {"error": "No se encontraron documentos."}
+        
+        return result
 
 
 class VectorDatabaseManager:
