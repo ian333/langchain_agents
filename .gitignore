@@ -196,6 +196,7 @@ skillstech/
 *~
 *.swp
 *.swo
+*.rdb
 
 # Ignore macOS specific files
 .DS_Store
