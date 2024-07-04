@@ -14,7 +14,7 @@ bucket_name = "CoursesFiles"
 import httpx
 
 class SourcesQA:
-    def __init__(self, courseid, id, orgid=None):
+    def __init__(self, courseid, id=None, orgid=None):
         self.orgid = orgid
         self.courseid = courseid
         self.id = id
@@ -59,6 +59,7 @@ class SourcesQA:
                 })
 
             data = {"sources": sources}
+            return data
             print(f"Sources data to be updated in Supabase for course ID {self.courseid}: {data}")
 
             try:

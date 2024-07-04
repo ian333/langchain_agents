@@ -14,7 +14,7 @@ import httpx
 from database.supa import supabase_admin,supabase_user
 
 class VideosQA:
-    def __init__(self, courseid, id, first_response, thread_id):
+    def __init__(self, courseid, id=None, first_response=None, thread_id=None):
         self.courseid = courseid
         self.id = id
         self.first_response = first_response
@@ -54,6 +54,7 @@ class VideosQA:
                     })
 
             data = {"videos": videos}
+            return data
             print(f"Videos data to be updated in Supabase for course ID {self.courseid}: {data}")
 
             try:

@@ -77,18 +77,17 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     print(result)
     print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
     # Guardar la respuesta en la base de datos
-    id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,orgid=orgid,history=history)
     # yield result,id
 
     try:
         if web==False:
             print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
-            videos = VideosQA(courseid=courseid, id=id,first_response=first_response,thread_id=thread_id)
-            sources = SourcesQA(courseid=courseid, id=id,orgid=orgid)
+            videos = VideosQA(courseid=courseid,thread_id=thread_id)
+            sources = SourcesQA(courseid=courseid, orgid=orgid)
             
             # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
-            video_task = await videos.query(prompt)
-            source_task = await sources.query(prompt)
+            video = await videos.query(prompt)
+            source = await sources.query(prompt)
 
         else:
             print("------------------------")
@@ -96,6 +95,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
             websearch=WebSearch(courseid=courseid, id=id,orgid=orgid)
             websearch_task = await asyncio.create_task(websearch.query(prompt))
 
+        id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=video,sources=source,orgid=orgid,history=history)
     finally:        
         pass
 
@@ -120,6 +120,7 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
             "created_at": datetime.now().isoformat(),
             "organizationid":orgid,
             "first_response":answer,
+            
 
 
         }
@@ -134,13 +135,12 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
         "created_at": datetime.now().isoformat(),
         "answer": answer,
         "followup":await run_follow(query=prompt,history=history),
-        "videos": "",
+        "videos": videos,
         "sources": sources,
         "fact": fact,
         "memberid":member_id,
         "organizationid":orgid,
-        "videos": {},
-        "sources": {"sources": []}
+
     }
     # Insertar los datos en la tabla responses_tb
     print(response_data)
