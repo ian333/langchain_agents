@@ -108,6 +108,7 @@ class CourseVideoProcessor:
         for course in courses_data:
 
             if course['reference_videos'] and course['local_video_processed'] != 'TRUE':
+                video=self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
                 print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA PROCESANDO EL video y este es el course id",course['id'])
                 self.transcriber = YouTubeTranscription(course_id=course['id'])
                 for video_url in course['reference_videos']:
@@ -119,7 +120,6 @@ class CourseVideoProcessor:
                             self.transcriber.docs_to_deeplakeDB(docs,course_id=course['id'])
                 print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video y este es el course id",course['id'])
 
-                video=self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
                 status=self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
                 print(video)
                 print(status)
@@ -181,7 +181,8 @@ class CourseProcessor:
         reference_files = course["reference_files"]
         courseid = course["id"]
 
-        if reference_files and isinstance(reference_files, list) and course['local_pdf_processed'] != 'FALSE':
+        if reference_files and isinstance(reference_files, list) and course['local_pdf_processed'] != 'TRUE':
+            save=self.supabase.table("courses_tb").update({"local_pdf_processed": "TRUE"}).eq("id", courseid).execute()
             for ref_file in reference_files:
                 url = ref_file["url"]
                 name = ref_file["name"]
@@ -193,11 +194,11 @@ class CourseProcessor:
         print("😁😁😁😁😁😁😁",file_url)
 
         response = self.supabase.storage.from_("CoursesFiles").download(file_url)
-        print(response)
+        # print(response)
         temp_dir = tempfile.mkdtemp()
         temp_file_path = os.path.join(temp_dir, file_name)
-        print(temp_dir)
-        print(temp_file_path)
+        # print(temp_dir)
+        # print(temp_file_path)
 
 
         with open(temp_file_path, 'wb') as temp_file:
@@ -214,10 +215,10 @@ class CourseProcessor:
         print("vector_pdf_database")
 
         DeepLake.from_documents(pages, self.embeddings, dataset_path=f"./skillstech/PDF-{courseid}",overwrite=False)
-        print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRU PDF",courseid)
-        save=self.supabase.table("courses_tb").update({"local_pdf_processed": "TRUE"}).eq("id", courseid).execute()
-        print(save)
-        print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE PDF")
+        # print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRU PDF",courseid)
+
+        # print(save)
+        # print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE PDF")
     
     
     def process_pdf(self,  courseid,file_path=None):
