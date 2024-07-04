@@ -22,17 +22,17 @@ class PDFQA:
         self.vectorstore_initialized = False
         self.supabase_admin = None
         self.companyid = None
-        self.initialize_supabase()
+    #     self.initialize_supabase()
 
-    def initialize_supabase(self):
-        url_admin = config("SUPABASE_ADMIN_URL")
-        key_admin = config("SUPABASE_ADMIN_KEY")
-        print(f"Connecting to Supabase with URL: {url_admin} and Key: {key_admin[:5]}...")
-        self.supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
-        print(f"Fetching data for course ID: {self.courseid}")
-        data_course = self.supabase_admin.table("courses_tb").select("*").eq("id", self.courseid).execute().data
-        # print(f"Data fetched for course ID {self.courseid}: {data_course}")
-        self.companyid = data_course[0]['companyid']
+    # def initialize_supabase(self):
+    #     url_admin = config("SUPABASE_ADMIN_URL")
+    #     key_admin = config("SUPABASE_ADMIN_KEY")
+    #     print(f"Connecting to Supabase with URL: {url_admin} and Key: {key_admin[:5]}...")
+    #     self.supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
+    #     print(f"Fetching data for course ID: {self.courseid}")
+    #     data_course = self.supabase_admin.table("courses_tb").select("*").eq("id", self.courseid).execute().data
+    #     # print(f"Data fetched for course ID {self.courseid}: {data_course}")
+    #     self.companyid = data_course[0]['companyid']
 
     def initialize_vectorstore(self):
         try:
@@ -50,7 +50,7 @@ class PDFQA:
             print(f"Error al inicializar vectorstore: {e}")
             self.vectorstore_initialized = False
 
-    def query(self, query_text):
+    async def query(self, query_text):
         if not self.vectorstore_initialized:
             self.initialize_vectorstore()
         result = self.qa(query_text)
@@ -81,7 +81,7 @@ class VideoQA:
             print(f"Error al inicializar vectorstore: {e}")
             self.vectorstore_initialized = False
 
-    def query(self, query_text):
+    async def query(self, query_text):
         if not self.vectorstore_initialized:
             self.initialize_vectorstore()
         result = self.qa(query_text)
