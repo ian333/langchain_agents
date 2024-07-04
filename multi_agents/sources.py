@@ -18,7 +18,7 @@ class SourcesQA:
         self.orgid = orgid
         self.courseid = courseid
         self.id = id
-        self.dataset_path = f"hub://skillstech/PDF-{self.courseid}"
+        self.dataset_path = f"./skillstech/PDF-{self.courseid}"
         self.vectorstore_initialized = False
 
         url_admin = config("SUPABASE_ADMIN_URL")
