@@ -112,11 +112,16 @@ class VectorDatabaseManager:
                 self.instances[f"VIDEO-{courseid}"] = VideoQA(courseid)
         print(f"Initialized instances: {self.instances}")
 
+
     async def query_instance(self, courseid: str, query_text: str, type: str):
         instance_key = f"{type}-{courseid}"
+        print(f"Querying instance with key: {instance_key}")
         if instance_key in self.instances:
+            print(f"Found instance for key: {instance_key}")
             instance = self.instances[instance_key]
-            result = instance.query(query_text)
+            result = await instance.query(query_text)
+            print(f"Query result: {result}")
             return result
         else:
+            print(f"No instance found for key: {instance_key}")
             return {"error": f"No instance found for {type}-{courseid}"}
