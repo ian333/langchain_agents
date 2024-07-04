@@ -106,6 +106,10 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
 
 async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None,history=None):
     first_response=False
+    # Proyecto Usuario
+    url_user: str = config("SUPABASE_USER_URL")
+    key_user: str = config("SUPABASE_USER_KEY")
+    supabase_user:Client= create_client(supabase_url=url_user,supabase_key= key_user)
     # Preparar los datos para insertar
     thread_exists = supabase_user.table("threads_tb").select("*").eq("id", thread_id).execute().data
 
