@@ -115,6 +115,8 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     """
     # Desempaquetar los datos recibidos
     # text = request_body.text
+    # Mide el tiempo de inicio de la solicitud
+    start_time = time.time()
     courseid = request_body.courseid
     memberid = request_body.memberid
     prompt = request_body.prompt
@@ -178,9 +180,11 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
         videos = VideosQA(courseid=courseid,thread_id=threadid)
         sources = SourcesQA(courseid=courseid, orgid=orgid)
         
-        # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
-        video = await videos.query(prompt)
-        source = await sources.query(prompt)
+        # Ejecuta las tareas en paralelo
+        video_task = videos.query(prompt)
+        source_task = sources.query(prompt)
+        
+        video, source = await asyncio.gather(video_task, source_task)
 
     else:
         print("------------------------")
