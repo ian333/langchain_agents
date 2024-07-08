@@ -41,7 +41,7 @@ from Prompt_languages import english,spanish
 import time
 
 
-async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None,history=None,orgid=None,language="english",web="", videos="",sources=""):
+async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None,history=None,orgid=None,language="english",web="", videos="",sources="",follow_up_questions=""):
 
     # Proyecto Usuario
     url_user: str = config("SUPABASE_USER_URL")
@@ -105,7 +105,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
         #     websearch=WebSearch(courseid=courseid, id=id,orgid=orgid)
         #     websearch_task = await asyncio.create_task(websearch.query(prompt))
 
-        id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,sources=sources,orgid=orgid,history=history)
+        id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,sources=sources,orgid=orgid,history=history,follow_up_questions=follow_up_questions)
     finally:        
         pass
     return id,first_response
@@ -115,7 +115,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
 
 
 
-async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None,history=None):
+async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prompt=None, followup=None, videos=None, sources=None, fact=None,orgid=None,history=None,follow_up_questions=None):
     first_response=False
     # Proyecto Usuario
     url_user: str = config("SUPABASE_USER_URL")
@@ -149,7 +149,7 @@ async def save_agent_response(thread_id,answer,courseid=None,member_id=None,prom
         "prompt": prompt,
         "created_at": datetime.now().isoformat(),
         "answer": answer,
-        "followup":await run_follow(query=prompt,history=history),
+        "followup":follow_up_questions,
         "videos": videos,
         "sources": sources,
         "fact": fact,

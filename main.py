@@ -39,6 +39,8 @@ set_debug(True)
 from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
 from multi_agents.web_search import WebSearch
+from multi_agents.follow_up import run_follow
+
 
 
 
@@ -179,12 +181,13 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
         print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
         videos = VideosQA(courseid=courseid,thread_id=threadid)
         sources = SourcesQA(courseid=courseid, orgid=orgid)
+        follow_task= run_follow(query=prompt,history=followup)
         
         # Ejecuta las tareas en paralelo
         video_task = videos.query(prompt)
         source_task = sources.query(prompt)
         
-        video, source = await asyncio.gather(video_task, source_task)
+        video, source,follow_up_questions = await asyncio.gather(video_task, source_task,follow_task)
 
     else:
         print("------------------------")
@@ -194,7 +197,7 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     
     
 
-    id,agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid,history=followup, orgid=orgid,web=web,videos=video,sources=source)
+    id,agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid,history=followup, orgid=orgid,web=web,videos=video,sources=source,follow_up_questions=follow_up_questions)
     end_time = time.time()
     response_time = end_time - start_time
 
