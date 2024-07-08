@@ -37,13 +37,12 @@ from multi_agents.web_search import WebSearch
 from multi_agents.follow_up import run_follow
 from database.supa import supabase_user
 
-
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 
 url_admin: str = config("SUPABASE_ADMIN_URL")
 key_admin: str = config("SUPABASE_ADMIN_KEY")
 
-supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
+supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
 
 from Config.config import set_language, get_language
 
@@ -131,51 +130,35 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
     }
     print(f"\033[94mUser data: {user_data}\033[0m")
 
-    # Ejecutar las tareas en segundo plano
-    background_tasks.add_task(process_request, threadid, courseid, memberid, prompt, followup, email, orgid, web, processed_info)
+    start_time = time.time()
 
-    # Esperar 8 segundos antes de devolver la respuesta
-    await asyncio.sleep(8)
+    if web == False:
+        print("\033[96mHello 😒😒😒😒😒😒😒😒😒😒😒\033[0m")
+        videos = VideosQA(courseid=courseid, thread_id=threadid)
+        sources = SourcesQA(courseid=courseid, orgid=orgid)
+        follow_task = run_follow(query=prompt, history=followup)
+        
+        # Ejecuta las tareas en paralelo
+        video_task = videos.query(prompt)
+        source_task = sources.query(prompt)
+        video, source, follow_up_questions = await asyncio.gather(video_task, source_task, follow_task)
+    else:
+        print("\033[96m------------------------\033[0m")
+        print("\033[96mHEY ENTRAMOS A WEB\033[0m")
+        websearch = WebSearch(courseid=courseid, id=threadid, orgid=orgid)
+        websearch_task = await asyncio.create_task(websearch.query(prompt))
+
+    id, agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid, web=web, videos=video, sources=source, follow_up_questions=follow_up_questions)
     end_time = time.time()
     response_time = end_time - start_time
-    print(f"\033[93mTiempo de procesamiento: {response_time} segundos\033[0m")
-    
-    return {"thread_id": threadid}
 
-async def process_request(threadid, courseid, memberid, prompt, followup, email, orgid, web, processed_info):
+    # Guardar el tiempo de respuesta en la base de datos
     try:
-        start_time = time.time()
-
-        if web == False:
-            print("\033[96mHello 😒😒😒😒😒😒😒😒😒😒😒\033[0m")
-            videos = VideosQA(courseid=courseid, thread_id=threadid)
-            sources = SourcesQA(courseid=courseid, orgid=orgid)
-            follow_task = run_follow(query=prompt, history=followup)
-            
-            # Ejecuta las tareas en paralelo
-            video_task = videos.query(prompt)
-            source_task = sources.query(prompt)
-            video, source, follow_up_questions = await asyncio.gather(video_task, source_task, follow_task)
-        else:
-            print("\033[96m------------------------\033[0m")
-            print("\033[96mHEY ENTRAMOS A WEB\033[0m")
-            websearch = WebSearch(courseid=courseid, id=threadid, orgid=orgid)
-            websearch_task = await asyncio.create_task(websearch.query(prompt))
-
-        id, agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid, web=web, videos=video, sources=source, follow_up_questions=follow_up_questions)
-
-        end_time = time.time()
-        response_time = end_time - start_time
-        print(f"\033[93mTiempo de procesamiento total: {response_time} segundos\033[0m")
-
-        # Guardar el tiempo de respuesta en la base de datos
-        try:
-            supabase_user.table("responses_tb").update({"response_sec": response_time}).eq("id", id).execute()
-        except Exception as e:
-            print(f"\033[91mError al actualizar la base de datos con el tiempo de respuesta: {e}\033[0m")
-
+        supabase_user.table("responses_tb").update({"response_sec": response_time}).eq("id", id).execute()
     except Exception as e:
-        print(f"\033[91mError processing request: {e}\033[0m")
+        print(f"\033[91mError al actualizar la base de datos con el tiempo de respuesta: {e}\033[0m")
+
+    return {"thread_id": threadid}
 
 from database.Vector_database import VectorDatabaseManager
 print("Se estan inicializando las VEctorDatabase")
@@ -192,3 +175,4 @@ async def query_database(request: QueryRequest):
     except Exception as e:
         print(f"\033[91mError processing query: {e}\033[0m")
         raise HTTPException(status_code=500, detail=str(e))
+
