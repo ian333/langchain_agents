@@ -1,8 +1,9 @@
 import os
 import re
 from decouple import config
-from supabase import create_client,Client
+from supabase import create_client, Client
 import requests
+import httpx
 
 # Configuración de variables de entorno
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
@@ -10,8 +11,6 @@ os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
 os.environ["GOOGLE_API_KEY"] = config("GOOGLE_API_KEY")
 
 bucket_name = "CoursesFiles"
-
-import httpx
 
 class SourcesQA:
     def __init__(self, courseid, id=None, orgid=None):
@@ -31,8 +30,8 @@ class SourcesQA:
     async def query(self, query_text):
         try:
             # Realizar la solicitud al nuevo servidor de bases de datos vectorizadas
-            api_url = "https://34.46.119.67/query"  # Añadir http://
-            api_url = "http://127.0.0.1:8000/query"  # Añadir http://127.0.0.1:8000/
+            api_url = "https://34.46.119.67/query"
+            api_url = "http://127.0.0.1:8000/query"
 
             payload = {
                 "courseid": self.courseid,
@@ -47,7 +46,7 @@ class SourcesQA:
             print(f"Received response: {result}")
             
             sources = []
-            for i, doc in enumerate(result.get("source_documents", []), start=1):
+            for i, doc in enumerate(result, start=1):
                 source = doc['metadata'].get('source')
                 nombre_libro_regex = re.search(r'/([^/]*)$', source).group(1) if re.search(r'/([^/]*)$', source) else "Nombre no disponible"
                 page = int(doc['metadata'].get('page', 0))
@@ -60,18 +59,6 @@ class SourcesQA:
 
             data = {"sources": sources}
             return data
-            print(f"Sources data to be updated in Supabase for course ID {self.courseid}: {data}")
-
-            try:
-                url_user = config("SUPABASE_USER_URL")
-                key_user = config("SUPABASE_USER_KEY")
-                self.supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
-                self.supabase_user.table("responses_tb").update({"sources": data}).eq("id", self.id).execute()
-                print(f"Supabase updated with sources for course ID {self.courseid}")
-            except Exception as e:
-                print(f"Error al actualizar la base de datos: {e}")
-            
-            return result if sources else {"error": "No se encontraron documentos."}
         except Exception as e:
             print(f"Error during query: {e}")
             return {"error": "No se pudo conectar a la base de datos esta vacia"}

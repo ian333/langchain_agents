@@ -29,13 +29,8 @@ class PDFQA:
     def initialize_vectorstore(self):
         try:
             llm = ChatGoogleGenerativeAI(model="gemini-pro")
-            vectorstore = DeepLake(dataset_path=self.dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
-            self.qa = RetrievalQAWithSourcesChain.from_chain_type(
-                llm=llm,
-                retriever=vectorstore.as_retriever(),
-                return_source_documents=True,
-                verbose=True,
-            )
+            self.vectorstore = DeepLake(dataset_path=self.dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
+
             self.vectorstore_initialized = True
             print(f"Vector store initialized for course ID {self.courseid}")
         except Exception as e:
@@ -45,7 +40,8 @@ class PDFQA:
     async def query(self, query_text):
         if not self.vectorstore_initialized:
             self.initialize_vectorstore()
-        result = self.qa(query_text)
+        result = self.vectorstore.similarity_search(query_text)
+        print("Esto es vector DATABASE imprime de pdfqa",result)
 
         return result 
 
@@ -60,13 +56,8 @@ class VideoQA:
     def initialize_vectorstore(self):
         try:
             llm = ChatGoogleGenerativeAI(model="gemini-pro")
-            vectorstore = DeepLake(dataset_path=self.dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
-            self.qa = RetrievalQAWithSourcesChain.from_chain_type(
-                llm=llm,
-                retriever=vectorstore.as_retriever(),
-                return_source_documents=True,
-                verbose=True,
-            )
+            self.vectorstore = DeepLake(dataset_path=self.dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
+
             self.vectorstore_initialized = True
             print(f"Vector store initialized for course ID {self.courseid}")
         except Exception as e:
@@ -76,7 +67,8 @@ class VideoQA:
     async def query(self, query_text):
         if not self.vectorstore_initialized:
             self.initialize_vectorstore()
-        result = self.qa(query_text)
+        result = self.vectorstore.similarity_search(query_text)
+        print("Esto es vector DATABASE imprime de videoqa",result)
         
         return result
 
