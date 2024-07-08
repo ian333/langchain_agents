@@ -1,6 +1,5 @@
 import os
 import re
-import asyncio
 from decouple import config
 from supabase import create_client
 from langchain.chains import RetrievalQAWithSourcesChain
@@ -23,8 +22,11 @@ class PDFQA:
         self.vectorstore_initialized = False
         self.supabase_admin = None
         self.companyid = None
+    #     self.initialize_supabase()
 
-    async def initialize_vectorstore(self):
+
+
+    def initialize_vectorstore(self):
         try:
             llm = ChatGoogleGenerativeAI(model="gemini-pro")
             vectorstore = DeepLake(dataset_path=self.dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
@@ -42,17 +44,20 @@ class PDFQA:
 
     async def query(self, query_text):
         if not self.vectorstore_initialized:
-            await self.initialize_vectorstore()
+            self.initialize_vectorstore()
         result = self.qa(query_text)
-        return result
+
+        return result 
+
 
 class VideoQA:
     def __init__(self, courseid):
         self.courseid = courseid
         self.dataset_path = f"./skillstech/VIDEO-{self.courseid}"
         self.vectorstore_initialized = False
+        self.initialize_vectorstore()
 
-    async def initialize_vectorstore(self):
+    def initialize_vectorstore(self):
         try:
             llm = ChatGoogleGenerativeAI(model="gemini-pro")
             vectorstore = DeepLake(dataset_path=self.dataset_path, embedding=OpenAIEmbeddings(), read_only=True)
@@ -70,9 +75,11 @@ class VideoQA:
 
     async def query(self, query_text):
         if not self.vectorstore_initialized:
-            await self.initialize_vectorstore()
+            self.initialize_vectorstore()
         result = self.qa(query_text)
+        
         return result
+
 
 class VectorDatabaseManager:
     def __init__(self):
@@ -83,28 +90,20 @@ class VectorDatabaseManager:
         path = "./skillstech"
         datasets = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
         print(f"Datasets found: {datasets}")
-        
-        loop = asyncio.get_event_loop()
-        tasks = [self.initialize_instance(dataset) for dataset in datasets]
-        loop.run_until_complete(asyncio.gather(*tasks))
+        for dataset in datasets:
+            print(f"Processing dataset: {dataset}")
+            match = re.match(r'^(PDF|VIDEO)-(.+)$', dataset)
+            if not match:
+                print(f"Skipping invalid dataset name: {dataset}")
+                continue
+            prefix, courseid = match.groups()
+            print(f"Extracted courseid: {courseid}")
+            if prefix == "PDF":
+                self.instances[f"PDF-{courseid}"] = PDFQA(courseid)
+            elif prefix == "VIDEO":
+                self.instances[f"VIDEO-{courseid}"] = VideoQA(courseid)
         print(f"Initialized instances: {self.instances}")
 
-    async def initialize_instance(self, dataset):
-        print(f"Processing dataset: {dataset}")
-        match = re.match(r'^(PDF|VIDEO)-(.+)$', dataset)
-        if not match:
-            print(f"Skipping invalid dataset name: {dataset}")
-            return
-        prefix, courseid = match.groups()
-        print(f"Extracted courseid: {courseid}")
-        if prefix == "PDF":
-            instance = PDFQA(courseid)
-            await instance.initialize_vectorstore()
-            self.instances[f"PDF-{courseid}"] = instance
-        elif prefix == "VIDEO":
-            instance = VideoQA(courseid)
-            await instance.initialize_vectorstore()
-            self.instances[f"VIDEO-{courseid}"] = instance
 
     async def query_instance(self, courseid: str, query_text: str, type: str):
         instance_key = f"{type}-{courseid}"

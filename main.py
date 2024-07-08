@@ -34,7 +34,7 @@ from supabase import create_client
 import os
 from langchain.globals import set_debug
 
-set_debug(True)
+set_debug(False)
 
 from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
