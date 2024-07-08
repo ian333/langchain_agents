@@ -48,7 +48,7 @@ class WebSearch:
 
         try:
                             # Inicialización de clientes Supabase
-            thread_exists = self.supabase_user.table("responses_tb").update({"sources": data}).eq("id", self.id).execute()
+            thread_exists = self.supabase_user.table("responses_tb").update({"sources": data,"web_search":"True"}).eq("id", self.id).execute()
         except Exception as e:
             print(f"Error al actualizar la base de datos: {e}")
             pass
