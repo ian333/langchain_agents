@@ -43,7 +43,7 @@ os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 url_admin: str = config("SUPABASE_ADMIN_URL")
 key_admin: str = config("SUPABASE_ADMIN_KEY")
 
-supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
+supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
 
 from Config.config import set_language, get_language
 
