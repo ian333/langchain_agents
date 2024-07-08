@@ -15,6 +15,10 @@ main_prompt="""
 
                     {thread_metrics}
                     -------------
+                    This is extra Information:
+                    {sources}
+                    {videos}
+                    {web}
 
                 
                 """

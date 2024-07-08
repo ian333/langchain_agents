@@ -40,7 +40,7 @@ from Prompt_languages import english,spanish
 
 
 
-async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None,language="english",web=False):
+async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None,history=None,orgid=None,language="english",web="", videos="",sources=""):
 
     # Proyecto Usuario
     url_user: str = config("SUPABASE_USER_URL")
@@ -69,7 +69,16 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     user_message = query  # Asumiendo que query contiene el mensaje actual del usuario
 
     # Ejecutar la cadena y obtener el resultado
-    result = chain.invoke({"history": history, "user_message": user_message,"custom_prompt":custom_prompt,"user_information":user_data,"thread_metrics":""})
+    result = chain.invoke({"history": history,
+                            "user_message": user_message,
+                            "custom_prompt":custom_prompt,
+                            "user_information":user_data,
+                            "thread_metrics":"",
+                            "web":web,
+                            "videos":videos,
+                            "sources":sources
+                            
+                            })
     result=result.content
     print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
     # print("Este es el resultado del mensaje",user_message,"Y este es el historial",history)

@@ -36,6 +36,11 @@ from langchain.globals import set_debug
 
 set_debug(True)
 
+from multi_agents.videos import VideosQA
+from multi_agents.sources import SourcesQA
+from multi_agents.web_search import WebSearch
+
+
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 
@@ -160,16 +165,29 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
     }
     print(user_data)
-    
-    
+
     if not threadid:
         threadid = str(uuid4())
-        agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,web=web)
-        # time.sleep(10)
-        return {"thread_id": threadid}
+ 
+    if web==False:
+        print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
+        videos = VideosQA(courseid=courseid,thread_id=threadid)
+        sources = SourcesQA(courseid=courseid, orgid=orgid)
+        
+        # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
+        video = await videos.query(prompt)
+        source = await sources.query(prompt)
+
     else:
-        agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,web=web)
-        return {"thread_id": threadid}
+        print("------------------------")
+        print("HEY ENTRAMOS A WEB")
+        websearch=WebSearch(courseid=courseid, id=id,orgid=orgid)
+        websearch_task = await asyncio.create_task(websearch.query(prompt))
+    
+    
+
+    agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid,history=followup, orgid=orgid,web=web,videos=video,sources=source)
+    return {"thread_id": threadid}
 
 
 
