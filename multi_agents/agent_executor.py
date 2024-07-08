@@ -104,7 +104,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
         #     websearch=WebSearch(courseid=courseid, id=id,orgid=orgid)
         #     websearch_task = await asyncio.create_task(websearch.query(prompt))
 
-        id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=video,sources=source,orgid=orgid,history=history)
+        id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,sources=sources,orgid=orgid,history=history)
     finally:        
         pass
 
