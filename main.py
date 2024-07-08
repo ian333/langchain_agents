@@ -50,6 +50,7 @@ key_admin: str = config("SUPABASE_ADMIN_KEY")
 supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
 
 from Config.config import set_language, get_language
+from database.supa import supabase_user
 
 
 # Configuración de la aplicación FastAPI
@@ -168,6 +169,9 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
     if not threadid:
         threadid = str(uuid4())
+
+    start_time = time.time()
+
  
     if web==False:
         print("Hello 😒😒😒😒😒😒😒😒😒😒😒")
@@ -186,7 +190,15 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
     
     
 
-    agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid,history=followup, orgid=orgid,web=web,videos=video,sources=source)
+    id,agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid,history=followup, orgid=orgid,web=web,videos=video,sources=source)
+    end_time = time.time()
+    response_time = end_time - start_time
+
+    # Guardar el tiempo de respuesta en la base de datos
+    try:
+        supabase_user.table("responses_tb").update({"response_sec": response_time}).eq("id", id).execute()
+    except Exception as e:
+        print(f"Error al actualizar la base de datos con el tiempo de respuesta: {e}")
     return {"thread_id": threadid}
 
 

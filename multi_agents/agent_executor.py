@@ -38,6 +38,7 @@ from Prompt_languages import spanish,english
 ## Idiomas
 from Prompt_languages import english,spanish
 
+import time
 
 
 async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None,history=None,orgid=None,language="english",web="", videos="",sources=""):
@@ -107,6 +108,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
         id,first_response,thread_id= await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos,sources=sources,orgid=orgid,history=history)
     finally:        
         pass
+    return id,first_response
 
 
 
