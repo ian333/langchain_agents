@@ -1,5 +1,6 @@
 import os
 import re
+import time
 from decouple import config
 from supabase import create_client
 from langchain.chains import RetrievalQAWithSourcesChain
@@ -22,9 +23,6 @@ class PDFQA:
         self.vectorstore_initialized = False
         self.supabase_admin = None
         self.companyid = None
-    #     self.initialize_supabase()
-
-
 
     def initialize_vectorstore(self):
         try:
@@ -40,8 +38,12 @@ class PDFQA:
     async def query(self, query_text):
         if not self.vectorstore_initialized:
             self.initialize_vectorstore()
+        start_time = time.time()
         result = self.vectorstore.similarity_search(query_text)
-        print("Esto es vector DATABASE imprime de pdfqa",result)
+        end_time = time.time()
+        response_time = end_time - start_time
+        print(f"PDFQA Query Time: {response_time:.4f} seconds")
+        # print("Esto es vector DATABASE imprime de pdfqa", result)
 
         return result 
 
@@ -67,8 +69,12 @@ class VideoQA:
     async def query(self, query_text):
         if not self.vectorstore_initialized:
             self.initialize_vectorstore()
+        start_time = time.time()
         result = self.vectorstore.similarity_search(query_text)
-        print("Esto es vector DATABASE imprime de videoqa",result)
+        end_time = time.time()
+        response_time = end_time - start_time
+        print(f"VideoQA Query Time: {response_time:.4f} seconds")
+        # print("Esto es vector DATABASE imprime de videoqa", result)
         
         return result
 
@@ -102,9 +108,13 @@ class VectorDatabaseManager:
         print(f"Querying instance with key: {instance_key}")
         if instance_key in self.instances:
             print(f"Found instance for key: {instance_key}")
+            start_time = time.time()
             instance = self.instances[instance_key]
             result = await instance.query(query_text)
-            print(f"Query result: {result}")
+            end_time = time.time()
+            response_time = end_time - start_time
+            print(f"Total Query Time for {instance_key}: {response_time:.4f} seconds")
+            # print(f"Query result: {result}")
             return result
         else:
             print(f"No instance found for key: {instance_key}")

@@ -35,7 +35,7 @@ class VideosQA:
                 response = await client.post(api_url, json=payload)
                 response.raise_for_status()
                 result = response.json()
-            print(f"Received response: {result}")
+            # print(f"Received response: {result}")
 
             videos = []
             for i, doc in enumerate(result, start=1):
