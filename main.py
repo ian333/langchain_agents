@@ -167,6 +167,7 @@ async def create_thread(request_body: ChatRequest, background_tasks: BackgroundT
 
 
     # Llamar al chat_endpoint para continuar el proceso de chat
+    print(f"\033[96m-----esto es request:{request_body} -------------------\033[0m")
     background_tasks.add_task(chat_endpoint, request_body, background_tasks, api_key)
 
     return {"thread_id": new_thread_id}
