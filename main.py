@@ -149,6 +149,8 @@ async def create_thread(request_body: ChatRequest, background_tasks: BackgroundT
     """
     # Crear un nuevo thread ID
     new_thread_id = str(uuid4())
+        # Actualizar el request_body con el nuevo thread ID
+    request_body.threadid = new_thread_id
 
     # Guardar el nuevo thread en la base de datos
     thread_data = {
@@ -160,10 +162,9 @@ async def create_thread(request_body: ChatRequest, background_tasks: BackgroundT
         "organizationid": request_body.organizationid,
         "first_response": None
     }
-    supabase_user.table("threads_tb").insert(thread_data).execute()
+    thread_supa=supabase_user.table("threads_tb").insert(thread_data).execute()
 
-    # Actualizar el request_body con el nuevo thread ID
-    request_body.threadid = new_thread_id
+
 
     # Llamar al chat_endpoint para continuar el proceso de chat
     background_tasks.add_task(chat_endpoint, request_body, background_tasks, api_key)
