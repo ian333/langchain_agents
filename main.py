@@ -106,7 +106,9 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
     print(f"\033[94mUser data: {user_data}\033[0m")
 
     start_time = time.time()
-
+    video=""
+    source=""
+    follow_up_questions=""
     if web == False:
         print("\033[96mHello 😒😒😒😒😒😒😒😒😒😒😒\033[0m")
         videos = VideosQA(courseid=courseid, thread_id=threadid)
