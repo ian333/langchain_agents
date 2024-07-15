@@ -61,6 +61,8 @@ async def validate_api_key(api_key_header: str = Security(api_key_header)):
 
 @app.post("/chat", status_code=status.HTTP_200_OK)
 async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundTasks, api_key: str = validate_api_key):
+    print(f"\033[96m-----esto es request:{request_body} -------------------\033[0m")
+
     start_time = time.time()
 
     courseid = request_body.courseid
@@ -147,6 +149,7 @@ async def create_thread(request_body: ChatRequest, background_tasks: BackgroundT
     Returns:
     - dict: Respuesta del agente y otros detalles relevantes.
     """
+
     # Crear un nuevo thread ID
     new_thread_id = str(uuid4())
         # Actualizar el request_body con el nuevo thread ID
