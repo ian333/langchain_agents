@@ -25,15 +25,22 @@ from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
 from multi_agents.web_search import WebSearch
 from multi_agents.follow_up import run_follow
-from database.supa import supabase_user,supabase_admin
+from database.supa import supabase_user
 import os
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 
-# url_admin = config("SUPABASE_ADMIN_URL")
-# key_admin = config("SUPABASE_ADMIN_KEY")
+url_admin = config("SUPABASE_ADMIN_URL")
+key_admin = config("SUPABASE_ADMIN_KEY")
 
-# supabase_admin :Client= create_client(supabase_url=url_admin, supabase_key=key_admin)
+supabase_admin :Client= create_client(supabase_url=url_admin, supabase_key=key_admin)
+
+
+# Proyecto Usuario
+url_user: str = config("SUPABASE_USER_URL")
+key_user: str = config("SUPABASE_USER_KEY")
+supabase_user:Client= create_client(supabase_url=url_user,supabase_key= key_user)
+
 
 from Config.config import set_language, get_language
 
