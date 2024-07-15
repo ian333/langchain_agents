@@ -16,7 +16,7 @@ from multi_agents.agent_utils import process_course_info
 from starlette.middleware.cors import CORSMiddleware
 
 from decouple import config
-from supabase import create_client
+from supabase import create_client,Client
 
 from langchain.globals import set_debug
 set_debug(False)
@@ -25,15 +25,15 @@ from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
 from multi_agents.web_search import WebSearch
 from multi_agents.follow_up import run_follow
-from database.supa import supabase_user
+from database.supa import supabase_user,supabase_admin
 import os
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 
-url_admin = config("SUPABASE_ADMIN_URL")
-key_admin = config("SUPABASE_ADMIN_KEY")
+# url_admin = config("SUPABASE_ADMIN_URL")
+# key_admin = config("SUPABASE_ADMIN_KEY")
 
-supabase_admin = create_client(supabase_url=url_admin, supabase_key=key_admin)
+# supabase_admin :Client= create_client(supabase_url=url_admin, supabase_key=key_admin)
 
 from Config.config import set_language, get_language
 
