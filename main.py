@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 import asyncio
 
-from fastapi import FastAPI, HTTPException, Request, Security, BackgroundTasks, Header, status
+from fastapi import FastAPI, HTTPException, Security, BackgroundTasks, Header, status
 from langchain.agents import initialize_agent, AgentType
 from langchain.callbacks.streaming_stdout_final_only import FinalStreamingStdOutCallbackHandler
 
@@ -25,6 +25,7 @@ from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
 from multi_agents.web_search import WebSearch
 from multi_agents.follow_up import run_follow
+from database.supa import supabase_user
 import os
 
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
@@ -39,7 +40,13 @@ class SupabaseClient:
         if SupabaseClient._admin_client is None:
             url_admin = config("SUPABASE_ADMIN_URL")
             key_admin = config("SUPABASE_ADMIN_KEY")
+            print(f"Admin URL: {url_admin}")
+            print(f"Admin Key: {key_admin[:5]}...")  # Print only the first few characters for security
             SupabaseClient._admin_client = create_client(supabase_url=url_admin, supabase_key=key_admin)
+            # Test admin client
+            SupabaseClient._admin_client.table("courses_tb").select("*").limit(1).execute()
+            print("Admin client created successfully.")
+
         return SupabaseClient._admin_client
 
     @staticmethod
@@ -47,7 +54,13 @@ class SupabaseClient:
         if SupabaseClient._user_client is None:
             url_user = config("SUPABASE_USER_URL")
             key_user = config("SUPABASE_USER_KEY")
+            print(f"User URL: {url_user}")
+            print(f"User Key: {key_user[:5]}...")  # Print only the first few characters for security
             SupabaseClient._user_client = create_client(supabase_url=url_user, supabase_key=key_user)
+        # Test user client
+            SupabaseClient._user_client.table("threads_tb").select("*").limit(1).execute()
+            print("User client created successfully.")
+
         return SupabaseClient._user_client
 
 supabase_admin = SupabaseClient.get_admin_client()
@@ -156,7 +169,9 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
             print(f"\033[91mError al actualizar la base de datos con el tiempo de respuesta: {e}\033[0m")
 
         return {"thread_id": threadid}
-
+    except APIError as e:
+        print(f"\033[91mAPI Error: {e}\033[0m")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     except Exception as e:
         print(f"\033[91mUnexpected Error: {e}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -177,7 +192,9 @@ async def create_thread(request_body: ChatRequest, background_tasks: BackgroundT
     }
     try:
         supabase_user.table("threads_tb").insert(thread_data).execute()
-
+    except APIError as e:
+        print(f"\033[91mAPI Error: {e}\033[0m")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     except Exception as e:
         print(f"\033[91mUnexpected Error: {e}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -190,6 +207,9 @@ from database.Vector_database import VectorDatabaseManager
 print("Se estan inicializando las VectorDatabase")
 vector_db_manager = VectorDatabaseManager()
 print("Se estan inicializando las VectorDatabase")
+
+
+       
 
 @app.post("/query")
 async def query_database(request: QueryRequest):
