@@ -156,7 +156,7 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
             print("\033[96m------------------------\033[0m")
             print("\033[96mHEY ENTRAMOS A WEB\033[0m")
             websearch = WebSearch(courseid=courseid, id=threadid, orgid=orgid)
-            websearch_task = await asyncio.create_task(websearch.query(prompt))
+            source = await asyncio.create_task(websearch.query(prompt))
 
         id, agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid, web=web, videos=video, sources=source, follow_up_questions=follow_up_questions)
         end_time = time.time()

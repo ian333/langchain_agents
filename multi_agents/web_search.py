@@ -45,6 +45,8 @@ class WebSearch:
 
         data = {"sources": sources}
         print(data)
+        return data
+
 
         try:
                             # Inicialización de clientes Supabase
