@@ -105,6 +105,9 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
     orgid = request_body.organizationid
     web = request_body.web
 
+
+    if not threadid:
+        threadid = str(uuid4())
     try:
         # Obtener instrucciones de la empresa desde la tabla de admin
         response = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute()
