@@ -57,8 +57,15 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
 
     if language == "english":
         main_prompt = english.main_prompt
+        if custom_prompt=="AI_companion":
+            main_prompt=english.ai_companion
     elif language == "spanish":
+        
         main_prompt = spanish.main_prompt
+        if custom_prompt=="AI_companion":
+            main_prompt=spanish.ai_companion
+
+
 
     # Configurar el prompt y el modelo
     prompt_template = ChatPromptTemplate.from_template(main_prompt)

@@ -3,6 +3,8 @@ from uuid import uuid4
 from datetime import datetime
 import time
 import asyncio
+import random
+
 
 from fastapi import FastAPI, HTTPException, Security, BackgroundTasks, Header, status
 from langchain.agents import initialize_agent, AgentType
@@ -80,6 +82,13 @@ app.add_middleware(
 
 HEADER_NAME = "X-API-KEY"
 api_key_header = Header(HEADER_NAME)
+
+
+
+
+def should_activate_ai_companion() -> bool:
+    # Decide randomly whether to activate the AI Companion
+    return random.random() < 0.25  # 25% probability
 
 async def validate_api_key(api_key_header: str = Security(api_key_header)):
     API_KEY = config("API_KEY")
@@ -171,11 +180,37 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
         except Exception as e:
             print(f"\033[91mError al actualizar la base de datos con el tiempo de respuesta: {e}\033[0m")
 
+
+                # Activar AI Companion aleatoriamente en segundo plano
+        if should_activate_ai_companion():
+            background_tasks.add_task(run_ai_companion, request_body)
+
         return {"thread_id": threadid}
 
     except Exception as e:
         print(f"\033[91mUnexpected Error: {e}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+
+
+async def run_ai_companion(request_body: ChatRequest):
+    print(f"\033[91Running AI Companion\033[0m")
+    courseid = request_body.courseid
+    memberid = request_body.memberid
+    prompt = request_body.prompt
+    threadid = request_body.threadid
+    followup = request_body.followup
+    email = request_body.email
+    orgid = request_body.organizationid
+
+    query = "AI COMPANION"
+    custom_prompt="AI_companion"
+
+    try:
+        await run_agent(query=query, courseid=courseid, member_id=memberid, custom_prompt=custom_prompt, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid)
+    except Exception as e:
+        print(f"\033[91mError running AI Companion: {e}\033[0m")
+
 
 @app.post("/create-thread", status_code=status.HTTP_200_OK)
 async def create_thread(request_body: ChatRequest, background_tasks: BackgroundTasks, api_key: str = validate_api_key):

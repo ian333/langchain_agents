@@ -17,7 +17,7 @@ from celery_functions.discovery import Discovery
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(
-        30.0,
+        600.0,
         process_all_courses.s(),
         name="Run periodic transcriptions every 20 minutes.",
     )

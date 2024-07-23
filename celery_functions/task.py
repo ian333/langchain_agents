@@ -107,7 +107,7 @@ class CourseVideoProcessor:
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
 
-            if course['reference_videos'] and course['local_video_processed'] != 'FALSE':
+            if course['reference_videos'] and course['local_video_processed'] != 'TRUE':
                 video=self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
                 print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA PROCESANDO EL video y este es el course id",course['id'])
                 self.transcriber = YouTubeTranscription(course_id=course['id'])
@@ -181,7 +181,7 @@ class CourseProcessor:
         reference_files = course["reference_files"]
         courseid = course["id"]
 
-        if reference_files and isinstance(reference_files, list) and course['local_pdf_processed'] != 'FALSE':
+        if reference_files and isinstance(reference_files, list) and course['local_pdf_processed'] != 'TRUE':
             save=self.supabase.table("courses_tb").update({"local_pdf_processed": "TRUE"}).eq("id", courseid).execute()
             for ref_file in reference_files:
                 url = ref_file["url"]
