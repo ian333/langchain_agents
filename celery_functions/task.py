@@ -42,6 +42,25 @@ url_user = config("SUPABASE_USER_URL")
 key_user = config("SUPABASE_USER_KEY")
 supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
 
+import yt_dlp
+from yt_dlp.utils import DownloadError
+from langchain_core.documents import Document
+from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
+from langchain_community.vectorstores import DeepLake
+from langchain_openai import OpenAIEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders.assemblyai import TranscriptFormat
+import assemblyai as aai
+import json
+from decouple import config
+from supabase import create_client
+
+aai.settings.api_key = config("ASSEMBLYAI_API_KEY")
+
+url_user = config("SUPABASE_USER_URL")
+key_user = config("SUPABASE_USER_KEY")
+supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
+
 class YouTubeTranscription:
     def __init__(self, course_id=None):
         self.course_id = course_id
@@ -91,7 +110,7 @@ class YouTubeTranscription:
         return docs
     
     def docs_to_deeplakeDB(self, docs, course_id):
-        dataset_path = f"hub://skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
+        dataset_path = f"./skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
         texts = []
 
@@ -119,9 +138,6 @@ class YouTubeTranscription:
 
         vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=True)
         vectorstore.add_documents(texts)
-
-
-
 class CourseVideoProcessor:
     def __init__(self):
         url_admin = config("SUPABASE_ADMIN_URL")
@@ -153,12 +169,9 @@ class CourseVideoProcessor:
                 self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
                 self.lista_de_docs = []
 
-
     def reset_processed_columns(self):
-        # Obtener todos los cursos de la tabla
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
-            # Actualizar las columnas a FALSE
             self.supabase.table("courses_tb").update({"local_video_processed": "FALSE", "local_pdf_processed": "FALSE"}).eq("id", course["id"]).execute()
         print("Todas las columnas local_video_processed y local_pdf_processed han sido actualizadas a FALSE.")
 
