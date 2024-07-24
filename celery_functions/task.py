@@ -22,6 +22,20 @@ from langchain.schema import Document
 from langchain_community.vectorstores import DeepLake
 from langchain_openai import OpenAIEmbeddings
 
+import yt_dlp
+from yt_dlp.utils import DownloadError
+from langchain_core.documents import Document
+
+from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
+from langchain_community.vectorstores import DeepLake
+from langchain_openai import OpenAIEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders.assemblyai import TranscriptFormat
+import assemblyai as aai
+import json
+from decouple import config
+from supabase import create_client
+
 aai.settings.api_key = config("ASSEMBLYAI_API_KEY")
 
 url_user = config("SUPABASE_USER_URL")
@@ -77,7 +91,7 @@ class YouTubeTranscription:
         return docs
     
     def docs_to_deeplakeDB(self, docs, course_id):
-        dataset_path = f"./skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
+        dataset_path = f"hub://skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
         texts = []
 
@@ -147,7 +161,6 @@ class CourseVideoProcessor:
             # Actualizar las columnas a FALSE
             self.supabase.table("courses_tb").update({"local_video_processed": "FALSE", "local_pdf_processed": "FALSE"}).eq("id", course["id"]).execute()
         print("Todas las columnas local_video_processed y local_pdf_processed han sido actualizadas a FALSE.")
-
 
 
 class CourseProcessor:
