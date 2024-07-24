@@ -11,19 +11,6 @@ import json
 from decouple import config
 from supabase import create_client, Client
 import os
-
-import yt_dlp
-from yt_dlp.utils import DownloadError
-from langchain_core.documents import Document
-from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
-from langchain_community.vectorstores import DeepLake
-from langchain_openai import OpenAIEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders.assemblyai import TranscriptFormat
-import assemblyai as aai
-import json
-from decouple import config
-from supabase import create_client, Client
 import requests
 
 aai.settings.api_key = config("ASSEMBLYAI_API_KEY")
@@ -43,57 +30,54 @@ class YouTubeTranscription:
 
     def get_transcript_yt(self, YT_URL):
         try:
-            print(f"\033[96mFetching information for URL: {YT_URL}\033[0m")
+            print(f"Fetching information for URL: {YT_URL}")
             with yt_dlp.YoutubeDL() as ydl:
                 info = ydl.extract_info(YT_URL, download=False)
-            print(f"\033[92mExtracted info: {info}\033[0m")
+            print(f"Extracted info: {info}")
             
             if "entries" in info:
                 info = info["entries"][0]
             YT_title = info.get('title', None)
 
             if "formats" not in info:
-                print(f"\033[93mFormats key not found in info dictionary for video {YT_URL}. Skipping...\033[0m")
+                print(f"Formats key not found in info dictionary for video {YT_URL}. Skipping...")
                 return None, None, None
 
             audio_url = None
             for format in info["formats"][::-1]:
-                print(f"\033[94mChecking format: {format}\033[0m")
+                print(f"Checking format: {format}")
                 if format["acodec"] != "none":
                     audio_url = format["url"]
                     break
 
-            print(f"\033[92mAudio URL: {audio_url}\033[0m")
+            print(f"Audio URL: {audio_url}")
             return YT_URL, YT_title, audio_url
         except DownloadError as e:
-            print(f"\033[91mError downloading video {YT_URL}: {e}\033[0m")
+            print(f"Error downloading video {YT_URL}: {e}")
             return None, None, None
 
-    def check_url_accessibility(self, url):
+    def download_audio(self, audio_url, output_path):
         try:
-            response = requests.head(url)
-            if response.status_code == 200:
-                print(f"\033[92mURL is accessible: {url}\033[0m")
-                return True
-            else:
-                print(f"\033[91mURL is not accessible, status code: {response.status_code}\033[0m")
-                return False
-        except requests.RequestException as e:
-            print(f"\033[91mError accessing URL: {e}\033[0m")
-            return False
-        
+            with yt_dlp.YoutubeDL({'outtmpl': output_path}) as ydl:
+                ydl.download([audio_url])
+            return output_path
+        except Exception as e:
+            print(f"Error downloading audio: {e}")
+            return None
+
     def url_to_docs(self, YT_URL, YT_title, audio_url):
-        if not self.check_url_accessibility(audio_url):
-            print(f"\033[91mAudio URL is not accessible, skipping transcription.\033[0m")
+        output_path = f"/tmp/{YT_title}.mp3"  # Adjust the output path as needed
+        downloaded_path = self.download_audio(audio_url, output_path)
+        if not downloaded_path:
+            print(f"Failed to download audio from URL: {audio_url}")
             return []
 
-        print(f"\033[96mTranscribing audio from URL: {audio_url}\033[0m")
+        print(f"Transcribing audio from file: {downloaded_path}")
         config = aai.TranscriptionConfig(
                 language_detection=True,
                 )
-        loader = AssemblyAIAudioTranscriptLoader(audio_url, config=config, transcript_format=TranscriptFormat.PARAGRAPHS)
+        loader = AssemblyAIAudioTranscriptLoader(downloaded_path, config=config, transcript_format=TranscriptFormat.PARAGRAPHS)
         docs = loader.load()
-        print(f"\033[92mTranscribed docs: {docs}\033[0m")
         for doc in docs:
             doc.metadata = {"source": YT_URL, "title": YT_title, "start": doc.metadata["start"], "end": doc.metadata["end"]}
         return docs
@@ -109,27 +93,27 @@ class YouTubeTranscription:
                     if isinstance(doc, Document):
                         texts.extend(text_splitter.split_documents([doc]))
                     else:
-                        print(f"\033[93mSkipping non-Document item: {doc}\033[0m")
+                        print(f"Skipping non-Document item: {doc}")
             elif isinstance(document, Document):
                 texts.extend(text_splitter.split_documents([document]))
             else:
-                print(f"\033[93mSkipping non-Document item: {document}\033[0m")
+                print(f"Skipping non-Document item: {document}")
 
-        print(f"\033[92mSplit texts: {texts}\033[0m")
+        print(f"Split texts: {texts}")
 
         if not texts:
-            print("\033[91mNo texts to add to DeepLake. Skipping...\033[0m")
+            print("No texts to add to DeepLake. Skipping...")
             return
 
         documents_str = '\n'.join([json.dumps(doc.metadata, indent=None, default=str) for doc in texts])
-        print(f"\033[94mDocuments string to be stored: {documents_str}\033[0m")
+        print(f"Documents string to be stored: {documents_str}")
 
         self.supabase.table("courses_tb").update({"video_docs_vdb": documents_str}).eq("id", course_id).execute()
-        print(f"\033[92mUpdated video_docs_vdb for course ID: {course_id}\033[0m")
+        print(f"Updated video_docs_vdb for course ID: {course_id}")
 
         vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=True)
         vectorstore.add_documents(texts)
-        print(f"\033[92mAdded documents to DeepLake at dataset path: {dataset_path}\033[0m")
+        print(f"Added documents to DeepLake at dataset path: {dataset_path}")
 
 class CourseVideoProcessor:
     def __init__(self):
@@ -143,7 +127,7 @@ class CourseVideoProcessor:
         for course in courses_data:
             if course['reference_videos'] and course['local_video_processed'] != 'TRUE':
                 self.transcriber = YouTubeTranscription(course_id=course['id'])
-                print(f"\033[96mProcessing course: {course['id']}\033[0m")
+                print(f"Processing course: {course['id']}")
                 for video_url in course['reference_videos']:
                     if video_url:
                         URL, title, audio_url = self.transcriber.get_transcript_yt(video_url)
@@ -156,18 +140,19 @@ class CourseVideoProcessor:
                             elif isinstance(docs, Document):
                                 self.lista_de_docs.append(docs)
                             else:
-                                print(f"\033[93mSkipping non-Document item in docs: {docs}\033[0m")
-                print(f"\033[92mDocuments list: {self.lista_de_docs}\033[0m")
+                                print(f"Skipping non-Document item in docs: {docs}")
+                print(f"Documents list: {self.lista_de_docs}")
                 self.transcriber.docs_to_deeplakeDB(self.lista_de_docs, course_id=course['id'])
                 self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
-                print(f"\033[92mMarked video_processed as TRUE for course ID: {course['id']}\033[0m")
+                print(f"Marked video_processed as TRUE for course ID: {course['id']}")
                 self.lista_de_docs = []
 
     def reset_processed_columns(self):
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
             self.supabase.table("courses_tb").update({"local_video_processed": "FALSE", "local_pdf_processed": "FALSE"}).eq("id", course["id"]).execute()
-        print("\033[92mTodas las columnas local_video_processed y local_pdf_processed han sido actualizadas a FALSE.\033[0m")
+        print("Todas las columnas local_video_processed y local_pdf_processed han sido actualizadas a FALSE.")
+
 
 
 class CourseProcessor:
