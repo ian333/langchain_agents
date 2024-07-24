@@ -35,7 +35,7 @@ class YouTubeTranscription:
             print(f"\033[92mFetching information for URL: {YT_URL}\033[0m")
             with yt_dlp.YoutubeDL() as ydl:
                 info = ydl.extract_info(YT_URL, download=False)
-            print(f"\033[92mExtracted info: {info}\033[0m")
+            # print(f"\033[92mExtracted info: {info}\033[0m")
             
             if "entries" in info:
                 info = info["entries"][0]
@@ -99,38 +99,39 @@ class YouTubeTranscription:
             doc.metadata = {"source": YT_URL, "title": YT_title, "start": doc.metadata["start"], "end": doc.metadata["end"]}
         return docs
     
-    def docs_to_deeplakeDB(self, docs, course_id):
-        dataset_path = f"./skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
-        texts = []
+def docs_to_deeplakeDB(self, docs, course_id):
+    dataset_path = f"./skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
+    texts = []
 
-        for document in docs:
-            if isinstance(document, list):
-                for doc in document:
-                    if isinstance(doc, Document):
-                        texts.extend(text_splitter.split_documents([doc]))
-                    else:
-                        print(f"\033[91mSkipping non-Document item: {doc}\033[0m")
-            elif isinstance(document, Document):
-                texts.extend(text_splitter.split_documents([document]))
-            else:
-                print(f"\033[91mSkipping non-Document item: {document}\033[0m")
+    for document in docs:
+        if isinstance(document, list):
+            for doc in document:
+                if isinstance(doc, Document):
+                    texts.extend(text_splitter.split_documents([doc]))
+                else:
+                    print(f"\033[91mSkipping non-Document item: {doc}\033[0m")
+        elif isinstance(document, Document):
+            texts.extend(text_splitter.split_documents([document]))
+        else:
+            print(f"\033[91mSkipping non-Document item: {document}")
 
-        print(f"\033[92mSplit texts: {texts}\033[0m")
+    print(f"\033[92mSplit texts: {texts}\033[0m")
 
-        if not texts:
-            print("\033[91mNo texts to add to DeepLake. Skipping...\033[0m")
-            return
+    if not texts:
+        print("\033[91mNo texts to add to DeepLake. Skipping...\033[0m")
+        return
 
-        documents_str = '\n'.join([json.dumps(doc.metadata, indent=None, default=str) for doc in texts])
-        print(f"\033[92mDocuments string to be stored: {texts}\033[0m")
+    # Convertir cada texto en un diccionario JSON serializable
+    documents_str = [doc.metadata for doc in texts]
+    print(f"\033[92mDocuments string to be stored: {documents_str}\033[0m")
 
-        self.supabase.table("courses_tb").update({"video_docs_vdb": texts}).eq("id", course_id).execute()
-        print(f"\033[92mUpdated video_docs_vdb for course ID: {course_id}\033[0m")
+    self.supabase.table("courses_tb").update({"video_docs_vdb": json.dumps(documents_str)}).eq("id", course_id).execute()
+    print(f"\033[92mUpdated video_docs_vdb for course ID: {course_id}\033[0m")
 
-        vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=True)
-        vectorstore.add_documents(texts)
-        print(f"\033[92mAdded documents to DeepLake at dataset path: {dataset_path}\033[0m")
+    vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=True)
+    vectorstore.add_documents(texts)
+    print(f"\033[92mAdded documents to DeepLake at dataset path: {dataset_path}\033[0m")
 
 class CourseVideoProcessor:
     def __init__(self):
