@@ -12,6 +12,20 @@ from decouple import config
 from supabase import create_client, Client
 import os
 
+import yt_dlp
+from yt_dlp.utils import DownloadError
+from langchain_core.documents import Document
+from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
+from langchain_community.vectorstores import DeepLake
+from langchain_openai import OpenAIEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders.assemblyai import TranscriptFormat
+import assemblyai as aai
+import json
+from decouple import config
+from supabase import create_client, Client
+import requests
+
 aai.settings.api_key = config("ASSEMBLYAI_API_KEY")
 
 url_user = config("SUPABASE_USER_URL")
@@ -54,8 +68,25 @@ class YouTubeTranscription:
         except DownloadError as e:
             print(f"\033[91mError downloading video {YT_URL}: {e}\033[0m")
             return None, None, None
+
+    def check_url_accessibility(self, url):
+        try:
+            response = requests.head(url)
+            if response.status_code == 200:
+                print(f"\033[92mURL is accessible: {url}\033[0m")
+                return True
+            else:
+                print(f"\033[91mURL is not accessible, status code: {response.status_code}\033[0m")
+                return False
+        except requests.RequestException as e:
+            print(f"\033[91mError accessing URL: {e}\033[0m")
+            return False
         
     def url_to_docs(self, YT_URL, YT_title, audio_url):
+        if not self.check_url_accessibility(audio_url):
+            print(f"\033[91mAudio URL is not accessible, skipping transcription.\033[0m")
+            return []
+
         print(f"\033[96mTranscribing audio from URL: {audio_url}\033[0m")
         config = aai.TranscriptionConfig(
                 language_detection=True,
@@ -108,7 +139,6 @@ class CourseVideoProcessor:
         self.supabase = create_client(supabase_url=url_admin, supabase_key=key_admin)
 
     def process_all_courses(self):
-        print("\033[92mentramos a Video.\033[0m")
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
             if course['reference_videos'] and course['local_video_processed'] != 'TRUE':
@@ -138,6 +168,7 @@ class CourseVideoProcessor:
         for course in courses_data:
             self.supabase.table("courses_tb").update({"local_video_processed": "FALSE", "local_pdf_processed": "FALSE"}).eq("id", course["id"]).execute()
         print("\033[92mTodas las columnas local_video_processed y local_pdf_processed han sido actualizadas a FALSE.\033[0m")
+
 
 class CourseProcessor:
     def __init__(self):
