@@ -125,7 +125,7 @@ class YouTubeTranscription:
         documents_str = '\n'.join([json.dumps(doc.metadata, indent=None, default=str) for doc in texts])
         print(f"\033[92mDocuments string to be stored: {documents_str}\033[0m")
 
-        self.supabase.table("courses_tb").update({"video_docs_vdb": documents_str}).eq("id", course_id).execute()
+        self.supabase.table("courses_tb").update({"video_docs_vdb": texts}).eq("id", course_id).execute()
         print(f"\033[92mUpdated video_docs_vdb for course ID: {course_id}\033[0m")
 
         vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=True)
