@@ -64,7 +64,7 @@ class CourseProcessor:
     def process_pdf(self, file_path, courseid):
         loader = PyPDFLoader(file_path)
         pages = loader.load_and_split()
-        DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub://skillstech/PDF-{courseid}",overwrite=False)
+        DeepLake.from_documents(pages, self.embeddings, dataset_path=f"hub/skillstech/PDF-{courseid}",overwrite=False)
         self.supabase.table("courses_tb").update({"pdf_processed": "TRUE"}).eq("id", courseid).execute()
 
 

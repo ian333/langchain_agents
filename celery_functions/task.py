@@ -1,5 +1,7 @@
 import yt_dlp
 from yt_dlp.utils import DownloadError
+from langchain_core.documents import Document
+
 from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
 from langchain_community.vectorstores import DeepLake
 from langchain_openai import OpenAIEmbeddings
@@ -8,14 +10,23 @@ from langchain_community.document_loaders.assemblyai import TranscriptFormat
 import assemblyai as aai
 import json
 from decouple import config
-from supabase import create_client, Client
+from supabase import create_client,Client
+import os
+
+from supabase import create_client
+from decouple import config
+import tempfile
+import os
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.schema import Document
+from langchain_community.vectorstores import DeepLake
+from langchain_openai import OpenAIEmbeddings
 
 aai.settings.api_key = config("ASSEMBLYAI_API_KEY")
 
 url_user = config("SUPABASE_USER_URL")
 key_user = config("SUPABASE_USER_KEY")
 supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
-
 
 class YouTubeTranscription:
     def __init__(self, course_id=None):
@@ -64,21 +75,38 @@ class YouTubeTranscription:
         for doc in docs:
             doc.metadata = {"source": YT_URL, "title": YT_title, "start": doc.metadata["start"], "end": doc.metadata["end"]}
         return docs
-
+    
     def docs_to_deeplakeDB(self, docs, course_id):
         dataset_path = f"./skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
         texts = []
+
         for document in docs:
-            texts.extend(text_splitter.split_documents(document))
-            print(f"Split texts: {texts}")
-            
-            documents_str = '\n'.join([json.dumps(doc, indent=None, default=str) for doc in texts])
+            if isinstance(document, list):
+                for doc in document:
+                    if isinstance(doc, Document):
+                        texts.extend(text_splitter.split_documents([doc]))
+                    else:
+                        print(f"Skipping non-Document item: {doc}")
+            elif isinstance(document, Document):
+                texts.extend(text_splitter.split_documents([document]))
+            else:
+                print(f"Skipping non-Document item: {document}")
+
+        print(f"Split texts: {texts}")
+
+        if not texts:
+            print("No texts to add to DeepLake. Skipping...")
+            return
+
+        documents_str = '\n'.join([json.dumps(doc.metadata, indent=None, default=str) for doc in texts])
 
         self.supabase.table("courses_tb").update({"video_docs_vdb": documents_str}).eq("id", course_id).execute()
 
         vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=True)
         vectorstore.add_documents(texts)
+
+
 
 class CourseVideoProcessor:
     def __init__(self):
@@ -98,12 +126,27 @@ class CourseVideoProcessor:
                         URL, title, audio_url = self.transcriber.get_transcript_yt(video_url)
                         if URL and title and audio_url:
                             docs = self.transcriber.url_to_docs(URL, title, audio_url)
-                            self.lista_de_docs.append(docs)
+                            if isinstance(docs, list):
+                                for doc in docs:
+                                    if isinstance(doc, Document):
+                                        self.lista_de_docs.append(doc)
+                            elif isinstance(docs, Document):
+                                self.lista_de_docs.append(docs)
+                            else:
+                                print(f"Skipping non-Document item in docs: {docs}")
                 print(f"Documents list: {self.lista_de_docs}")
                 self.transcriber.docs_to_deeplakeDB(self.lista_de_docs, course_id=course['id'])
                 self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
                 self.lista_de_docs = []
 
+
+    def reset_processed_columns(self):
+        # Obtener todos los cursos de la tabla
+        courses_data = self.supabase.table("courses_tb").select("*").execute().data
+        for course in courses_data:
+            # Actualizar las columnas a FALSE
+            self.supabase.table("courses_tb").update({"local_video_processed": "FALSE", "local_pdf_processed": "FALSE"}).eq("id", course["id"]).execute()
+        print("Todas las columnas local_video_processed y local_pdf_processed han sido actualizadas a FALSE.")
 
 
 
@@ -225,7 +268,8 @@ class CourseProcessor:
             #     print(f"Error al procesar el curso {course['name']} ({course['id']}): {str(e)} esta es la url {url}")
             #     self.failed_courses.append(f"{course['name']} ({course['id']}): {str(e)}")
 
-
+import tempfile
+from langchain_community.document_loaders import PyPDFLoader
 
 class CourseFactsProcessor:
     def __init__(self):
