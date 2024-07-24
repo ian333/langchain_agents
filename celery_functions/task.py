@@ -126,6 +126,7 @@ class CourseVideoProcessor:
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
             if course['reference_videos'] and course['local_video_processed'] != 'TRUE':
+                save=self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
                 self.transcriber = YouTubeTranscription(course_id=course['id'])
                 print(f"Processing course: {course['id']}")
                 for video_url in course['reference_videos']:
