@@ -10,7 +10,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders.assemblyai import TranscriptFormat
 import assemblyai as aai
 from decouple import config
-from supabase import create_client
+from supabase import create_client,Client
 import time
 import glob
 
@@ -136,6 +136,8 @@ class CourseVideoProcessor:
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
             if course['reference_videos'] and course['local_video_processed'] != 'TRUE':
+                save=self.supabase.table("courses_tb").update({"local_pdf_processed": "TRUE"}).eq("id", courseid).execute()
+
                 self.transcriber = YouTubeTranscription(course_id=course['id'])
                 print(f"\033[96mProcessing course: {course['id']}\033[0m")
                 for video_url in course['reference_videos']:
