@@ -1,53 +1,38 @@
 import yt_dlp
+from yt_dlp.utils import DownloadError
 from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
 from langchain_community.vectorstores import DeepLake
 from langchain_openai import OpenAIEmbeddings
-import yt_dlp
-from yt_dlp.utils import DownloadError
-
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders.assemblyai import TranscriptFormat
-
-from langchain.document_loaders import AssemblyAIAudioTranscriptLoader
-from langchain_community.vectorstores import DeepLake
-from langchain_openai import OpenAIEmbeddings
 import assemblyai as aai
-import os 
 import json
-
-import tempfile
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.schema import Document
-from langchain_community.vectorstores import DeepLake
-from langchain_openai import OpenAIEmbeddings
-
-
 from decouple import config
 from supabase import create_client, Client
-aai.settings.api_key = "26f195ae63cf434280dd530fb61d6981"
 
+aai.settings.api_key = config("ASSEMBLYAI_API_KEY")
 
-url_user: str = config("SUPABASE_USER_URL")
-key_user: str = config("SUPABASE_USER_KEY")
-supabase_user:Client = create_client(supabase_url=url_user,supabase_key= key_user)
-
-os.environ["ACTIVELOOP_TOKEN"] = config("ACTIVELOOP_TOKEN")
-
+url_user = config("SUPABASE_USER_URL")
+key_user = config("SUPABASE_USER_KEY")
+supabase_user = create_client(supabase_url=url_user, supabase_key=key_user)
 
 
 class YouTubeTranscription:
     def __init__(self, course_id=None):
         self.course_id = course_id
         self.embeddings = OpenAIEmbeddings()
-        url_admin: str = config("SUPABASE_ADMIN_URL")
-        key_admin: str = config("SUPABASE_ADMIN_KEY")
-
-        self.supabase:Client = create_client(supabase_url=url_admin,supabase_key= key_admin)
+        
+        url_admin = config("SUPABASE_ADMIN_URL")
+        key_admin = config("SUPABASE_ADMIN_KEY")
+        self.supabase = create_client(supabase_url=url_admin, supabase_key=key_admin)
 
     def get_transcript_yt(self, YT_URL):
         try:
+            print(f"Fetching information for URL: {YT_URL}")
             with yt_dlp.YoutubeDL() as ydl:
                 info = ydl.extract_info(YT_URL, download=False)
+            print(f"Extracted info: {info}")
+            
             if "entries" in info:
                 info = info["entries"][0]
             YT_title = info.get('title', None)
@@ -58,95 +43,67 @@ class YouTubeTranscription:
 
             audio_url = None
             for format in info["formats"][::-1]:
+                print(f"Checking format: {format}")
                 if format["acodec"] != "none":
                     audio_url = format["url"]
                     break
 
+            print(f"Audio URL: {audio_url}")
             return YT_URL, YT_title, audio_url
         except DownloadError as e:
             print(f"Error downloading video {YT_URL}: {e}")
             return None, None, None
         
     def url_to_docs(self, YT_URL, YT_title, audio_url):
+        print(f"Transcribing audio from URL: {audio_url}")
         config = aai.TranscriptionConfig(
                 language_detection=True,
-                #auto_highlights=True,
-                #summarization=True, summarization incompatible with auto_chapters
-                #auto_chapters=True,
                 )
-        loader = AssemblyAIAudioTranscriptLoader(audio_url,config=config,transcript_format=TranscriptFormat.PARAGRAPHS,)
+        loader = AssemblyAIAudioTranscriptLoader(audio_url, config=config, transcript_format=TranscriptFormat.PARAGRAPHS)
         docs = loader.load()
         for doc in docs:
-                doc.metadata = {"source": YT_URL, "title": YT_title, "start":doc.metadata["start"], "end":doc.metadata["end"]}
+            doc.metadata = {"source": YT_URL, "title": YT_title, "start": doc.metadata["start"], "end": doc.metadata["end"]}
         return docs
 
-    def docs_to_deeplakeDB(self, docs,course_id):
+    def docs_to_deeplakeDB(self, docs, course_id):
         dataset_path = f"./skillstech/VIDEO-{self.course_id}" if self.course_id else "default_path"
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
-        texts=[]
-        print(docs)
-        print("😁😁😁😁 se esta procesando el curso")
+        texts = []
+        for document in docs:
+            texts.extend(text_splitter.split_documents(document))
+            print(f"Split texts: {texts}")
+            
+            documents_str = '\n'.join([json.dumps(doc, indent=None, default=str) for doc in texts])
 
-        documents_str = '\n'.join([json.dumps(docs, indent=None, default=str)])
-        print(documents_str)
         self.supabase.table("courses_tb").update({"video_docs_vdb": documents_str}).eq("id", course_id).execute()
 
-        vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=False)
-        vectorstore.add_documents(docs)
-#   "https://www.youtube.com/watch?v=dbQjFzOgpzg"
-
+        vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=True)
+        vectorstore.add_documents(texts)
 
 class CourseVideoProcessor:
     def __init__(self):
-        url_admin: str = config("SUPABASE_ADMIN_URL")
-        key_admin: str = config("SUPABASE_ADMIN_KEY")
-
-        self.supabase:Client = create_client(supabase_url=url_admin,supabase_key= key_admin)
+        url_admin = config("SUPABASE_ADMIN_URL")
+        key_admin = config("SUPABASE_ADMIN_KEY")
+        self.lista_de_docs = []
+        self.supabase = create_client(supabase_url=url_admin, supabase_key=key_admin)
 
     def process_all_courses(self):
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
-
-            if course['reference_videos'] and course['local_video_processed'] != 'TRUE':
-                video=self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
-                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA PROCESANDO EL video y este es el course id",course['id'])
+            if course['reference_videos'] and course['video_processed'] != 'TRUE':
                 self.transcriber = YouTubeTranscription(course_id=course['id'])
+                print(f"Processing course: {course['id']}")
                 for video_url in course['reference_videos']:
-                    if video_url:  # Asegurar que la URL no está vacía
+                    if video_url:
                         URL, title, audio_url = self.transcriber.get_transcript_yt(video_url)
-                        if URL and title and audio_url:  # Asegurar que todos los componentes son válidos
-                            
+                        if URL and title and audio_url:
                             docs = self.transcriber.url_to_docs(URL, title, audio_url)
-                            self.transcriber.docs_to_deeplakeDB(docs,course_id=course['id'])
-                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video y este es el course id",course['id'])
+                            self.lista_de_docs.append(docs)
+                print(f"Documents list: {self.lista_de_docs}")
+                self.transcriber.docs_to_deeplakeDB(self.lista_de_docs, course_id=course['id'])
+                self.supabase.table("courses_tb").update({"video_processed": "TRUE"}).eq("id", course['id']).execute()
+                self.lista_de_docs = []
 
-                status=self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
-                print(video)
-                print(status)
-                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE video")
-    
-    def update_all_courses(self):
-        courses_data = self.supabase.table("courses_tb").select("*").execute().data
-        for course in courses_data:
-            if course['videos_to_update']:
-                self.supabase.table("courses_tb").update({"status": "processing"}).eq("id", course['id']).execute()
-                self.transcriber = YouTubeTranscription(course_id=course['id'])
-                for video_url in course['videos_to_update']:
-                    if video_url:  # Asegurar que la URL no está vacía
-                        URL, title, audio_url = self.transcriber.get_transcript_yt(video_url)
-                        if URL and title and audio_url:  # Asegurar que todos los componentes son válidos
-                            docs = self.transcriber.url_to_docs(URL, title, audio_url)
-                            self.transcriber.docs_to_deeplakeDB(docs,course_id=course['id'])
-                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video")
-
-                video=self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
-                self.supabase.table("courses_tb").update({"videos_to_update": ""}).eq("id", course['id']).execute()
-
-                status=self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
-                print(video)
-                print(status)
-                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE video")
-    
 
 
 
