@@ -51,6 +51,10 @@ class YouTubeTranscription:
             return None, None
 
     def download_audio(self, YT_URL, output_path):
+        if os.path.exists(output_path):
+            print(f"\033[92mAudio file already exists: {output_path}\033[0m")
+            return output_path
+
         try:
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -60,6 +64,9 @@ class YouTubeTranscription:
                     'preferredcodec': 'mp3',
                     'preferredquality': '192',
                 }],
+                'ffmpeg_location': '/usr/bin/ffmpeg',  # Asegúrate de que la ruta a ffmpeg sea correcta
+                'postprocessor_args': ['-fflags', '+discardcorrupt'],
+                'ffprobe_location': '/usr/bin/ffprobe',  # Añadir la ubicación de ffprobe
                 'keepvideo': True,  # Añadir esta opción
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -136,7 +143,7 @@ class CourseVideoProcessor:
         courses_data = self.supabase.table("courses_tb").select("*").execute().data
         for course in courses_data:
             if course['reference_videos'] and course['local_video_processed'] != 'TRUE':
-                save=self.supabase.table("courses_tb").update({"local_pdf_processed": "TRUE"}).eq("id", course['id']).execute()
+                save=self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
 
                 self.transcriber = YouTubeTranscription(course_id=course['id'])
                 print(f"\033[96mProcessing course: {course['id']}\033[0m")
