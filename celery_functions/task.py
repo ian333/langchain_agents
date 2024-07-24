@@ -123,7 +123,7 @@ class YouTubeTranscription:
             return
 
         # Convertir cada texto en un diccionario JSON serializable
-        documents_str = [doc.metadata for doc in texts]
+        documents_str = [doc.to_dict() for doc in texts]
         print(f"\033[92mDocuments string to be stored: {documents_str}\033[0m")
 
         self.supabase.table("courses_tb").update({"video_docs_vdb": json.dumps(documents_str)}).eq("id", course_id).execute()
@@ -132,6 +132,17 @@ class YouTubeTranscription:
         vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=True)
         vectorstore.add_documents(texts)
         print(f"\033[92mAdded documents to DeepLake at dataset path: {dataset_path}\033[0m")
+
+    # Añadir el método to_dict() en la clase Document si no existe
+    def document_to_dict(doc):
+        return {
+            "page_content": doc.page_content,
+            "metadata": doc.metadata
+        }
+
+    # Asegurarse de que cada documento tenga el método to_dict()
+    Document.to_dict = document_to_dict
+
 
 class CourseVideoProcessor:
     def __init__(self):
