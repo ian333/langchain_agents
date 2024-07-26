@@ -68,8 +68,8 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
         if custom_prompt=="AI_companion":
             main_prompt=spanish.ai_companion
     if custom_ai:
-        main_prompt=custom_ai
-        llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
+        # main_prompt=custom_ai
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
 
 
 
