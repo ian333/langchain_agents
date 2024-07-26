@@ -39,7 +39,7 @@ from Prompt_languages import english, spanish
 
 import time
 
-async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, history=None, orgid=None, language="english", web="", videos="", sources="", follow_up_questions="",type=None):
+async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, history=None, orgid=None, language="english", web="", videos="", sources="", follow_up_questions="",type=None,custom_ai=""):
     start_time = time.time()
     print(f"\033[94mStarting run_agent at {start_time}\033[0m")
 
@@ -64,6 +64,8 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
         main_prompt = spanish.main_prompt
         if custom_prompt=="AI_companion":
             main_prompt=spanish.ai_companion
+    if custom_ai:
+        main_prompt=custom_ai
 
 
 

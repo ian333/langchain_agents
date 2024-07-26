@@ -157,7 +157,7 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
         video = ""
         source = ""
         follow_up_questions = ""
-        if web == False or first_response== True:
+        if web == False or first_response== False:
             print("\033[96mHello 😒😒😒😒😒😒😒😒😒😒😒\033[0m")
             videos = VideosQA(courseid=courseid, thread_id=threadid)
             sources = SourcesQA(courseid=courseid, orgid=orgid)
@@ -166,13 +166,13 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
             video_task = videos.query(prompt)
             source_task = sources.query(prompt)
             video, source, follow_up_questions = await asyncio.gather(video_task, source_task, follow_task)
-        else:
+        if web == True or first_response== True:
             print("\033[96m------------------------\033[0m")
             print("\033[96mHEY ENTRAMOS A WEB\033[0m")
             websearch = WebSearch(courseid=courseid, id=threadid, orgid=orgid)
             source = await asyncio.create_task(websearch.query(prompt))
 
-        id, agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid, web=web, videos=video, sources=source, follow_up_questions=follow_up_questions)
+        id, agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid, web=web, videos=video, sources=source, follow_up_questions=follow_up_questions,custom_ai=custom_prompt)
         end_time = time.time()
         response_time = end_time - start_time
 
