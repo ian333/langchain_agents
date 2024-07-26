@@ -118,9 +118,10 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
     if not threadid:
         threadid = str(uuid4())
         first_response=True
-        custom_prompt="Da la Bienvenida al estudiante y responde un poco de su pregunta pero responde rapido y amable"
+        custom_ai="Da la Bienvenida al estudiante y responde un poco de su pregunta pero responde rapido y amable"
     else:
         first_response=False
+        custom_ai=""
     try:
         # Obtener instrucciones de la empresa desde la tabla de admin
         response = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute()
@@ -174,7 +175,7 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
             websearch = WebSearch(courseid=courseid, id=threadid, orgid=orgid)
             source = await asyncio.create_task(websearch.query(prompt))
 
-        id, agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid, web=web, videos=video, sources=source, follow_up_questions=follow_up_questions)
+        id, agent_task = await run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid, web=web, videos=video, sources=source, follow_up_questions=follow_up_questions,custom_ai=custom_ai)
         end_time = time.time()
         response_time = end_time - start_time
 
