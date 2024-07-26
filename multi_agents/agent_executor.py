@@ -48,6 +48,9 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     key_user: str = config("SUPABASE_USER_KEY")
     supabase_user: Client = create_client(supabase_url=url_user, supabase_key=key_user)
 
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
+
+
     tb = supabase_user.table("threads_tb").select("*").eq("courseid", courseid).execute().data
     user_data = ""
     thread_metrics = ""
@@ -66,13 +69,14 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
             main_prompt=spanish.ai_companion
     if custom_ai:
         main_prompt=custom_ai
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5")
+
 
 
 
     # Configurar el prompt y el modelo
     prompt_template = ChatPromptTemplate.from_template(main_prompt)
 
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
 
     chain = prompt_template | llm
     # Crear el contexto y el mensaje del usuario para la consulta
