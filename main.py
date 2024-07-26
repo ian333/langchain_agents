@@ -121,7 +121,7 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
         custom_ai="Da la Bienvenida al estudiante y responde un poco de su pregunta pero responde rapido y amable"
     else:
         first_response=False
-        custom_ai=""
+        custom_ai=None
     try:
         # Obtener instrucciones de la empresa desde la tabla de admin
         response = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute()
