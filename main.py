@@ -101,6 +101,7 @@ async def validate_api_key(api_key_header: str = Security(api_key_header)):
 
 @app.post("/chat", status_code=status.HTTP_200_OK)
 async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundTasks, api_key: str = validate_api_key):
+    first_response=False
     print(f"\033[96m-----esto es request:{request_body} -------------------\033[0m")
 
     start_time = time.time()
