@@ -119,6 +119,8 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
         threadid = str(uuid4())
         first_response=True
         custom_prompt="Da la Bienvenida al estudiante y responde un poco de su pregunta pero responde rapido y amable"
+    else:
+        first_response=False
     try:
         # Obtener instrucciones de la empresa desde la tabla de admin
         response = supabase_admin.table("courses_tb").select("*").eq("id", courseid).execute()
@@ -157,7 +159,7 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
         video = ""
         source = ""
         follow_up_questions = ""
-        if web == False:
+        if web == False and first_response== False:
             print("\033[96mHello 😒😒😒😒😒😒😒😒😒😒😒\033[0m")
             videos = VideosQA(courseid=courseid, thread_id=threadid)
             sources = SourcesQA(courseid=courseid, orgid=orgid)
