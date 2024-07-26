@@ -39,7 +39,7 @@ from Prompt_languages import english, spanish
 
 import time
 
-async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, history=None, orgid=None, language="english", web="", videos="", sources="", follow_up_questions=""):
+async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, history=None, orgid=None, language="english", web="", videos="", sources="", follow_up_questions="",type=None):
     start_time = time.time()
     print(f"\033[94mStarting run_agent at {start_time}\033[0m")
 
@@ -93,7 +93,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
     print("-------------😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍----")
 
     try:
-        id, first_response, thread_id = await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos, sources=sources, orgid=orgid, history=history, follow_up_questions=follow_up_questions)
+        id, first_response, thread_id = await save_agent_response(thread_id=thread_id, member_id=member_id, courseid=courseid, answer=result, prompt=query, videos=videos, sources=sources, orgid=orgid, history=history, follow_up_questions=follow_up_questions,type=type)
     finally:
         end_time = time.time()
         response_time = end_time - start_time
@@ -101,7 +101,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
         
     return id, first_response
 
-async def save_agent_response(thread_id, answer, courseid=None, member_id=None, prompt=None, followup=None, videos=None, sources=None, fact=None, orgid=None, history=None, follow_up_questions=None):
+async def save_agent_response(thread_id, answer, courseid=None, member_id=None, prompt=None, followup=None, videos=None, sources=None, fact=None, orgid=None, history=None, follow_up_questions=None,type="Chat"):
     first_response = False
     start_time = time.time()
     print(f"\033[94mStarting save_agent_response at {start_time}\033[0m")
@@ -140,6 +140,8 @@ async def save_agent_response(thread_id, answer, courseid=None, member_id=None, 
         "fact": fact,
         "memberid": member_id,
         "organizationid": orgid,
+        "typeOf":type
+
     }
     # Insertar los datos en la tabla responses_tb
     print(response_data)

@@ -207,7 +207,7 @@ async def run_ai_companion(request_body: ChatRequest):
     custom_prompt="AI_companion"
 
     try:
-        await run_agent(query=query, courseid=courseid, member_id=memberid, custom_prompt=custom_prompt, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid)
+        await run_agent(query=query, courseid=courseid, member_id=memberid, custom_prompt=custom_prompt, prompt=prompt, thread_id=threadid, history=followup, orgid=orgid,type="companion")
     except Exception as e:
         print(f"\033[91mError running AI Companion: {e}\033[0m")
 
