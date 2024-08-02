@@ -183,6 +183,28 @@ class CourseVideoProcessor:
                 if file_age > age_in_seconds:
                     os.remove(filename)
                     print(f"\033[92mDeleted old temp file: {filename}\033[0m")
+    def update_all_courses(self):
+        courses_data = self.supabase.table("courses_tb").select("*").execute().data
+        for course in courses_data:
+            if course['videos_to_update']:
+                self.supabase.table("courses_tb").update({"status": "processing"}).eq("id", course['id']).execute()
+                self.transcriber = YouTubeTranscription(course_id=course['id'])
+                for video_url in course['videos_to_update']:
+                    if video_url:  # Asegurar que la URL no está vacía
+                        URL, title, audio_url = self.transcriber.get_transcript_yt(video_url)
+                        if URL and title and audio_url:  # Asegurar que todos los componentes son válidos
+                            docs = self.transcriber.url_to_docs(URL, title, audio_url)
+                            self.transcriber.docs_to_deeplakeDB(docs,course_id=course['id'])
+                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video")
+
+                video=self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
+                self.supabase.table("courses_tb").update({"videos_to_update": ""}).eq("id", course['id']).execute()
+
+                status=self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
+                print(video)
+                print(status)
+                print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE video")
+    
 
 
 class CourseProcessor:
