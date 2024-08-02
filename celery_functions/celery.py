@@ -18,13 +18,13 @@ def setup_periodic_tasks(sender, **kwargs):
         name="Run periodic transcriptions every 20 minutes.",
     )
     sender.add_periodic_task(
-        1200.0,
+        120.0,
         update_courses.s(),
         name="update every 20 minutes.",
     )
 
     sender.add_periodic_task(
-        600.0,
+        6000.0,
         discovery.s(),
         name="Crea Discovery's cada 10 min",
     )
