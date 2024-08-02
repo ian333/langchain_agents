@@ -129,7 +129,7 @@ class YouTubeTranscription:
         self.supabase.table("courses_tb").update({"video_docs_vdb": json.dumps(documents_str)}).eq("id", course_id).execute()
         print(f"\033[92mUpdated video_docs_vdb for course ID: {course_id}\033[0m")
 
-        vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=True)
+        vectorstore = DeepLake(dataset_path=dataset_path, embedding=self.embeddings, overwrite=False)
         vectorstore.add_documents(texts)
         print(f"\033[92mAdded documents to DeepLake at dataset path: {dataset_path}\033[0m")
 

@@ -20,7 +20,7 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(
         120.0,
         update_courses.s(),
-        name="update every 20 minutes.",
+        name="update every  20 minutes.",
     )
 
     sender.add_periodic_task(
