@@ -39,7 +39,7 @@ from Prompt_languages import english, spanish
 
 import time
 
-async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, history=None, orgid=None, language="english", web="", videos="", sources="", follow_up_questions="",type=None,custom_ai=None):
+async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, history=None, orgid=None, language="english", web="", videos="", sources="", follow_up_questions="",type="response",custom_ai=None):
     start_time = time.time()
     print(f"\033[94mStarting run_agent at {start_time}\033[0m")
 
@@ -107,7 +107,7 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
         
     return id, first_response
 
-async def save_agent_response(thread_id, answer, courseid=None, member_id=None, prompt=None, followup=None, videos=None, sources=None, fact=None, orgid=None, history=None, follow_up_questions=None,type="Chat"):
+async def save_agent_response(thread_id, answer, courseid=None, member_id=None, prompt=None, followup=None, videos=None, sources=None, fact=None, orgid=None, history=None, follow_up_questions=None,type="response"):
     first_response = False
     start_time = time.time()
     print(f"\033[94mStarting save_agent_response at {start_time}\033[0m")

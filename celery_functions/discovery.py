@@ -23,7 +23,7 @@ class Discovery:
         os.environ["GOOGLE_API_KEY"] = config("GOOGLE_API_KEY")
 
         # Inicialización del modelo de lenguaje
-        self.llm = ChatGoogleGenerativeAI(model="gemini-pro")
+        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
 
 
         # Definición del prompt
