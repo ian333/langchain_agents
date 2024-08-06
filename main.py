@@ -161,7 +161,7 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
         video = ""
         source = ""
         follow_up_questions = ""
-        if web == False and first_response== False:
+        if web == False :
             print("\033[96mHello 😒😒😒😒😒😒😒😒😒😒😒\033[0m")
             videos = VideosQA(courseid=courseid, thread_id=threadid)
             sources = SourcesQA(courseid=courseid, orgid=orgid)
@@ -170,7 +170,7 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
             video_task = videos.query(prompt)
             source_task = sources.query(prompt)
             video, source, follow_up_questions = await asyncio.gather(video_task, source_task, follow_task)
-        if web == True or first_response== True:
+        if web == True:
             print("\033[96m------------------------\033[0m")
             print("\033[96mHEY ENTRAMOS A WEB\033[0m")
             websearch = WebSearch(courseid=courseid, id=threadid, orgid=orgid)
