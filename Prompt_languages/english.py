@@ -32,16 +32,30 @@ Please, return only 4 questions in list format separated by semicolon (;) in thi
 Question1;Question2;Question3;Question4
 IMPORTANT -------------------------------
 FOLLOW THE INSTRUCTIONS TO THE LETTER SEPARATED BY SEMICOLON
+-----------------------------------------
+The questions should be clear, concise, and directly related to the topic specified in {query}.
+-----------------------------------------
 #example 1
 What's the best way to store dried herbs?;What are some low-impact exercises suitable for seniors?;Can you recommend some easy beginner woodworking projects?;Is it possible to propagate succulent plants using leaves?
 
 #example 2
 How do I make homemade pasta without a machine?;Which vegetables grow well in containers?;Are there any good online resources for learning new languages?;Should I use oil or butter when cooking with garlic?
 
-Additionally, please respond in the same language as the query. For example, if the query is in Spanish, your response should also be in Spanish.
+#example 3
+What are the benefits of meditation for mental health?;How can I start a small business from home?;What are the best practices for email marketing?;How do I maintain a balanced diet while traveling?
 
-                                                       
-    """
+#example 4
+What are some effective time management strategies for students?;How can I improve my public speaking skills?;What are the most popular tourist attractions in Paris?;How can I create a budget for my personal finances?
+
+#example 5
+What are the symptoms of a gluten allergy?;How can I improve my photography skills?;What are some good habits for maintaining mental health?;What are the key elements of a successful business plan?
+
+#example 6
+How can I learn to play the guitar on my own?;What are the best practices for sustainable living?;How can I enhance my problem-solving skills?;What are the benefits of regular physical exercise?
+
+Additionally, please respond in the same language as the query. For example, if the query is in Spanish, your response should also be in Spanish.
+"""
+
 
 discovery=    """
     Analyze the following course information and categorize it into the given format.
@@ -74,7 +88,7 @@ discovery=    """
     - Ensure that the icon URLs are relevant and visually appealing.
     - Create titles and descriptions that would attract a user's attention and curiosity.
 
-    Here are two examples of the desired output format:
+    Here are six examples of the desired output format:
 
     Example 1:
     categories:
@@ -112,10 +126,48 @@ discovery=    """
         icon_url: "https://example.com/icons/machine-learning.png"
         description: "Build and validate predictive models with cutting-edge machine learning techniques."
 
+    Example 3:
+    categories:
+      - name: "Statistical Analysis: Unlock Deeper Insights from Your Data"
+        threads:
+          - "Explain me how to perform hypothesis testing. What are the different types of hypothesis tests, and how do you choose the appropriate test for your data? How do you interpret the results of a hypothesis test to draw meaningful conclusions?"
+          - "What are the best practices for conducting regression analysis? How do different types of regression models, like linear and logistic regression, differ in their applications? How can regression analysis help in understanding relationships between variables?"
+          - "Curious about time series analysis? How do you analyze data that varies over time, and what are the common techniques used in time series analysis? How can time series forecasting be applied in real-world scenarios?"
+        icon_url: "https://example.com/icons/statistical-analysis.png"
+        description: "Delve into the world of statistical analysis to uncover deeper insights from your data."
+
+    Example 4:
+    categories:
+      - name: "Big Data Technologies: Taming the Data Deluge"
+        threads:
+          - "Explain me the Hadoop ecosystem. What are the key components of Hadoop, and how do they work together to manage and process large datasets? How does Hadoop's distributed storage and processing capability enhance data management?"
+          - "What makes the Spark framework a powerful tool for data processing? How does Spark differ from Hadoop, and what are its advantages in terms of speed and efficiency? How can you leverage Spark for real-time data analysis?"
+          - "How do NoSQL databases handle massive volumes of unstructured data? What are the different types of NoSQL databases, and how do you choose the right one for your needs? How can NoSQL databases improve scalability and flexibility in data management?"
+        icon_url: "https://example.com/icons/big-data.png"
+        description: "Explore powerful technologies to manage and analyze massive datasets efficiently."
+
+    Example 5:
+    categories:
+      - name: "Advanced Data Visualization: Crafting Stories with Data"
+        threads:
+          - "Explain me the principles of effective data visualization. What are the key elements to consider when creating visualizations, and how can they enhance the communication of data insights? How do you choose the right type of chart or graph for your data?"
+          - "How can you use tools like Tableau and Power BI for data visualization? What are the features and capabilities of these tools, and how do they compare? How can you create interactive and dynamic dashboards to present data?"
+          - "Interested in learning about geospatial data visualization? How do you visualize geographic data, and what tools are available for this purpose? What are the best practices for creating maps and other geospatial visualizations?"
+        icon_url: "https://example.com/icons/data-visualization.png"
+        description: "Master the art of data visualization to effectively communicate your data insights."
+
+    Example 6:
+    categories:
+      - name: "Data Engineering: Building Robust Data Pipelines"
+        threads:
+          - "Explain me the fundamentals of data engineering. What are the key responsibilities of a data engineer, and how do they contribute to the data lifecycle? What skills and tools are essential for a successful career in data engineering?"
+          - "How do you design and build data pipelines? What are the steps involved in creating a data pipeline, and how do you ensure its reliability and scalability? How do you handle data ingestion, transformation, and storage in a pipeline?"
+          - "Curious about data warehousing? What is a data warehouse, and how does it differ from a database? How do you design a data warehouse to support efficient querying and analysis? What are the best practices for maintaining a data warehouse?"
+        icon_url: "https://example.com/icons/data-engineering.png"
+        description: "Learn how to build robust data pipelines and manage the data lifecycle effectively."
 
     ALWAYS give me the answer in the specified JSON format.
     """
-
 
 
 

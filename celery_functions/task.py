@@ -317,6 +317,7 @@ class CourseProcessor:
 
                     self.successful_courses.append(f"{course['name']} ({course['id']})")
                     self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", courseid).execute()
+                    self.supabase.table("courses_tb").update({"reference_files": "aqui quiero que añada lo que estaba en pdf_to updtae y lo añada a reference files "}).eq("id", courseid).execute()
                     self.supabase.table("courses_tb").update({"pdf_to_update": ""}).eq("id", courseid).execute()
 
 

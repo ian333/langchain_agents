@@ -23,21 +23,35 @@ main_prompt = """
                 
                 
                 """
-
-follow_up = """
-Tu trabajo es darme una lista de preguntas relacionadas con {query}.
+follow_up="""
+Tu trabajo es proporcionarme una lista de preguntas relacionadas con {query}.
 IMPORTANTE -------------------------------
 Por favor, devuelve solo 4 preguntas en formato de lista separadas por punto y coma (;) de esta manera:
 Pregunta1;Pregunta2;Pregunta3;Pregunta4
 IMPORTANTE -------------------------------
 SIGUE LAS INSTRUCCIONES AL PIE DE LA LETRA SEPARADAS POR PUNTO Y COMA
+-----------------------------------------
+Las preguntas deben ser claras, concisas y directamente relacionadas con el tema especificado en {query}.
+-----------------------------------------
 #ejemplo 1
 ¿Cuál es la mejor manera de almacenar hierbas secas?;¿Cuáles son algunos ejercicios de bajo impacto adecuados para personas mayores?;¿Puedes recomendar algunos proyectos de carpintería fáciles para principiantes?;¿Es posible propagar plantas suculentas usando hojas?
 
 #ejemplo 2
-¿Cómo hago pasta casera sin una máquina?;¿Qué verduras crecen bien en contenedores?;¿Hay buenos recursos en línea para aprender nuevos idiomas?;¿Debo usar aceite o mantequilla al cocinar con ajo?
+¿Cómo hago pasta casera sin una máquina?;¿Qué verduras crecen bien en contenedores?;¿Hay buenos recursos en línea para aprender nuevos idiomas?;¿Debo usar aceite o mantequilla cuando cocino con ajo?
 
-Además, por favor responde en el mismo idioma en que se hace la consulta. Por ejemplo, si la consulta está en español, tu respuesta también debe estar en español.
+#ejemplo 3
+¿Cuáles son los beneficios de la meditación para la salud mental?;¿Cómo puedo empezar un pequeño negocio desde casa?;¿Cuáles son las mejores prácticas para el marketing por correo electrónico?;¿Cómo mantengo una dieta equilibrada mientras viajo?
+
+#ejemplo 4
+¿Cuáles son algunas estrategias efectivas de gestión del tiempo para estudiantes?;¿Cómo puedo mejorar mis habilidades de oratoria?;¿Cuáles son las atracciones turísticas más populares en París?;¿Cómo puedo crear un presupuesto para mis finanzas personales?
+
+#ejemplo 5
+¿Cuáles son los síntomas de una alergia al gluten?;¿Cómo puedo mejorar mis habilidades fotográficas?;¿Cuáles son algunos buenos hábitos para mantener la salud mental?;¿Cuáles son los elementos clave de un plan de negocios exitoso?
+
+#ejemplo 6
+¿Cómo puedo aprender a tocar la guitarra por mi cuenta?;¿Cuáles son las mejores prácticas para una vida sostenible?;¿Cómo puedo mejorar mis habilidades para resolver problemas?;¿Cuáles son los beneficios del ejercicio físico regular?
+
+Además, por favor responde en el mismo idioma que la consulta. Por ejemplo, si la consulta está en inglés, tu respuesta también debe estar en inglés.
 """
 
 discovery = """
