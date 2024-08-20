@@ -5,7 +5,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 import json
 import os
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 import tempfile
 from Config.config import set_language, get_language
 from Prompt_languages import english, spanish
@@ -50,20 +50,23 @@ class Discovery:
         with open(temp_file_path, 'wb') as temp_file:
             temp_file.write(response)
 
-        pdf_reader = PdfFileReader(temp_file_path)
-        num_pages = pdf_reader.numPages
+        pdf_reader = PdfReader(temp_file_path)
+        num_pages = len(pdf_reader.pages)
         extracted_text = ""
 
         # Extraer texto de dos páginas aleatorias
         for page_num in range(min(2, num_pages)):
-            page = pdf_reader.getPage(page_num)
+            page = pdf_reader.pages[page_num]
             extracted_text += page.extract_text() + "\n"
 
         os.unlink(temp_file_path)
         return extracted_text
 
-    def process_courses(self):
-        courses = self.supabase.table('courses_tb').select("*").execute().data
+    def process_courses(self, course_ids=None):
+        query = self.supabase.table('courses_tb').select("*")
+        if course_ids:
+            query = query.in_("id", course_ids)
+        courses = query.execute().data
 
         for course in courses:
             course_info = ""
@@ -103,3 +106,4 @@ class Discovery:
                 print(f"Original response: {response}")
 
             self.supabase.table("courses_tb").update({"categories": data}).eq("id", course["id"]).execute()
+

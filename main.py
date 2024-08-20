@@ -1,3 +1,4 @@
+from fastapi import FastAPI, HTTPException, status, Form
 # main.py
 from uuid import uuid4
 from datetime import datetime
@@ -27,6 +28,7 @@ from multi_agents.videos import VideosQA
 from multi_agents.sources import SourcesQA
 from multi_agents.web_search import WebSearch
 from multi_agents.follow_up import run_follow
+from multi_agents.articles_agent import ArticleRequest,make_article
 from database.supa import supabase_user
 import os
 
@@ -261,3 +263,48 @@ async def query_database(request: QueryRequest):
     except Exception as e:
         print(f"\033[91mError processing query: {e}\033[0m")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+
+@app.post("/articles/new", status_code=status.HTTP_201_CREATED)
+async def create_article(
+    prompt: str = Form(...),
+    courseid: str = Form(...),
+    projectid: str = Form(...),
+    memberid: str = Form(...),
+    organizationid: str = Form(...)
+):
+    try:
+        print(f"\033[94m[INFO] Recibiendo datos del formulario...\033[0m")
+        print(f"\033[94mPrompt: {prompt}\033[0m")
+        print(f"\033[94mCourse ID: {courseid}\033[0m")
+        print(f"\033[94mProject ID: {projectid}\033[0m")
+        print(f"\033[94mMember ID: {memberid}\033[0m")
+        print(f"\033[94mOrganization ID: {organizationid}\033[0m")
+
+        # Generar el contenido del artículo usando el prompt proporcionado
+        content = await make_article(prompt)
+
+        # Guardar el artículo en la base de datos utilizando Supabase
+        result = supabase_user.table("articles_tb").insert({
+            "prompt": prompt,
+            "content": content,
+            "courseid": courseid,
+            "projectid": projectid,
+            "memberid": memberid,
+            "organizationid": organizationid,
+        }).execute()
+
+        if not result or "error" in result:
+            raise HTTPException(status_code=500, detail="Error saving article to database")
+
+        # Devolver el ID del artículo creado
+        article_id = result.data[0]['id']
+        print(f"\033[92m[INFO] Artículo guardado exitosamente en la base de datos con ID: {article_id}\033[0m")
+        return {"id": article_id}
+
+    except Exception as e:
+        print(f"\033[91m[ERROR] Error creating article: {str(e)}\033[0m")
+        raise HTTPException(status_code=500, detail="Internal Server Error")

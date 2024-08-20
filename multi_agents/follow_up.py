@@ -16,7 +16,7 @@ from decouple import config
 import os
 import google.generativeai as genai
 
-os.environ["GOOGLE_API_KEY"] = "AIzaSyDqRltPWDD4-HUxSJ9FzkEuCQ3T1F2lqKg"
+os.environ["GOOGLE_API_KEY"] = config("GOOGLE_API_KEY")
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from Prompt_languages import english,spanish

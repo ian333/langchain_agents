@@ -56,8 +56,7 @@ How can I learn to play the guitar on my own?;What are the best practices for su
 Additionally, please respond in the same language as the query. For example, if the query is in Spanish, your response should also be in Spanish.
 """
 
-
-discovery=    """
+discovery = """
     Analyze the following course information and categorize it into the given format.
     {course_information}
     this is the user information
@@ -88,7 +87,7 @@ discovery=    """
     - Ensure that the icon URLs are relevant and visually appealing.
     - Create titles and descriptions that would attract a user's attention and curiosity.
 
-    Here are six examples of the desired output format:
+    Here are six examples of the desired output format. These examples are for illustrative purposes and are based on data science topics. For the actual categories and threads, you MUST base them on the specific course information provided:
 
     Example 1:
     categories:
@@ -97,7 +96,6 @@ discovery=    """
           - "Explain me how to design surveys that yield the best results. What are the key factors to consider in survey design to ensure high response rates and data accuracy? How can sampling methods impact the quality of your data?"
           - "Can you explain how to unlock insights using Web Scraping and APIs? What are the ethical considerations and best practices in web scraping? How do APIs facilitate data integration from multiple sources?"
           - "What are the most efficient data storage and management techniques? How can cloud storage solutions enhance data accessibility and security? What role do database management systems play in organizing large datasets?"
-        icon_url: "https://example.com/icons/data-collection.png"
         description: "Explore advanced methods and tools for gathering data effectively and efficiently."
 
       - name: "Perfect Your Data Cleaning Skills: Transform Raw Data into Actionable Insights"
@@ -105,7 +103,6 @@ discovery=    """
           - "Explain me how to handle missing values like a pro. What are the various techniques for imputing missing data, and how do you choose the right one for your dataset? How can the presence of missing values affect your analysis outcomes?"
           - "What techniques will you use to transform and normalize your data for better results? How do normalization and standardization help in preparing data for machine learning algorithms? What are the common pitfalls to avoid during data transformation?"
           - "Curious about detecting and treating outliers in your data? How can outliers skew your data analysis, and what methods can you use to identify them? What strategies can be implemented to mitigate the impact of outliers on your results?"
-        icon_url: "https://example.com/icons/data-cleaning.png"
         description: "Learn how to prepare raw data for analysis by cleaning and transforming it."
 
     Example 2:
@@ -115,7 +112,6 @@ discovery=    """
           - "Explain me how to uncover insights with descriptive statistics. What are the key measures of central tendency and variability, and how do they help in summarizing data? How can descriptive statistics provide a foundation for further statistical analysis?"
           - "Ready to visualize data using advanced techniques? How do different types of charts and graphs facilitate the understanding of data patterns? What are the best practices for creating impactful data visualizations that convey your message clearly?"
           - "How can you identify patterns and trends in your data? What statistical methods and tools are most effective for trend analysis? How can recognizing patterns in data help in making data-driven decisions?"
-        icon_url: "https://example.com/icons/exploratory-data-analysis.png"
         description: "Analyze data to uncover hidden insights and patterns."
 
       - name: "Dive into Machine Learning: Build and Validate Predictive Models"
@@ -123,7 +119,6 @@ discovery=    """
           - "Explain me the key supervised learning algorithms you should know. How do algorithms like linear regression, decision trees, and support vector machines work, and what are their typical applications? How do you choose the right algorithm for your predictive modeling tasks?"
           - "Interested in unlocking the potential of unsupervised learning techniques? How do clustering methods like k-means and hierarchical clustering differ, and what are their use cases? How can unsupervised learning help in discovering hidden patterns in data?"
           - "How can you ensure your models are evaluated and validated correctly? What are the essential techniques for model evaluation, such as cross-validation and ROC curves? How do you interpret model performance metrics to improve your machine learning models?"
-        icon_url: "https://example.com/icons/machine-learning.png"
         description: "Build and validate predictive models with cutting-edge machine learning techniques."
 
     Example 3:
@@ -133,7 +128,6 @@ discovery=    """
           - "Explain me how to perform hypothesis testing. What are the different types of hypothesis tests, and how do you choose the appropriate test for your data? How do you interpret the results of a hypothesis test to draw meaningful conclusions?"
           - "What are the best practices for conducting regression analysis? How do different types of regression models, like linear and logistic regression, differ in their applications? How can regression analysis help in understanding relationships between variables?"
           - "Curious about time series analysis? How do you analyze data that varies over time, and what are the common techniques used in time series analysis? How can time series forecasting be applied in real-world scenarios?"
-        icon_url: "https://example.com/icons/statistical-analysis.png"
         description: "Delve into the world of statistical analysis to uncover deeper insights from your data."
 
     Example 4:
@@ -143,7 +137,6 @@ discovery=    """
           - "Explain me the Hadoop ecosystem. What are the key components of Hadoop, and how do they work together to manage and process large datasets? How does Hadoop's distributed storage and processing capability enhance data management?"
           - "What makes the Spark framework a powerful tool for data processing? How does Spark differ from Hadoop, and what are its advantages in terms of speed and efficiency? How can you leverage Spark for real-time data analysis?"
           - "How do NoSQL databases handle massive volumes of unstructured data? What are the different types of NoSQL databases, and how do you choose the right one for your needs? How can NoSQL databases improve scalability and flexibility in data management?"
-        icon_url: "https://example.com/icons/big-data.png"
         description: "Explore powerful technologies to manage and analyze massive datasets efficiently."
 
     Example 5:
@@ -153,7 +146,6 @@ discovery=    """
           - "Explain me the principles of effective data visualization. What are the key elements to consider when creating visualizations, and how can they enhance the communication of data insights? How do you choose the right type of chart or graph for your data?"
           - "How can you use tools like Tableau and Power BI for data visualization? What are the features and capabilities of these tools, and how do they compare? How can you create interactive and dynamic dashboards to present data?"
           - "Interested in learning about geospatial data visualization? How do you visualize geographic data, and what tools are available for this purpose? What are the best practices for creating maps and other geospatial visualizations?"
-        icon_url: "https://example.com/icons/data-visualization.png"
         description: "Master the art of data visualization to effectively communicate your data insights."
 
     Example 6:
@@ -163,12 +155,12 @@ discovery=    """
           - "Explain me the fundamentals of data engineering. What are the key responsibilities of a data engineer, and how do they contribute to the data lifecycle? What skills and tools are essential for a successful career in data engineering?"
           - "How do you design and build data pipelines? What are the steps involved in creating a data pipeline, and how do you ensure its reliability and scalability? How do you handle data ingestion, transformation, and storage in a pipeline?"
           - "Curious about data warehousing? What is a data warehouse, and how does it differ from a database? How do you design a data warehouse to support efficient querying and analysis? What are the best practices for maintaining a data warehouse?"
-        icon_url: "https://example.com/icons/data-engineering.png"
         description: "Learn how to build robust data pipelines and manage the data lifecycle effectively."
 
-    ALWAYS give me the answer in the specified JSON format.
-    """
+    REMEMBER: The examples provided above are for data science topics. The final categories and threads should be based on the specific course information provided, especially if it pertains to food-related topics or other non-data science subjects.
 
+    ALWAYS give me the answer in the specified JSON format.
+"""
 
 
 

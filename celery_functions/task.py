@@ -133,7 +133,6 @@ class YouTubeTranscription:
         vectorstore.add_documents(texts)
         print(f"\033[92mAdded documents to DeepLake at dataset path: {dataset_path}\033[0m")
 
-
 class CourseVideoProcessor:
     def __init__(self):
         url_admin = config("SUPABASE_ADMIN_URL")
@@ -185,25 +184,66 @@ class CourseVideoProcessor:
                     print(f"\033[92mDeleted old temp file: {filename}\033[0m")
 
     def update_all_courses(self):
-            courses_data = self.supabase.table("courses_tb").select("*").execute().data
-            for course in courses_data:
-                if course['videos_to_update']:
-                    self.supabase.table("courses_tb").update({"status": "processing"}).eq("id", course['id']).execute()
-                    self.transcriber = YouTubeTranscription(course_id=course['id'])
-                    for video_url in course['videos_to_update']:
-                        if video_url:  # Asegurar que la URL no está vacía
-                            URL, title = self.transcriber.get_video_info(video_url)
-                            if URL and title:  # Asegurar que todos los componentes son válidos
-                                audio_url = URL  # Utilizamos la URL del video para descargar el audio
-                                docs = self.transcriber.url_to_docs(URL, title, audio_url)
-                                self.transcriber.docs_to_deeplakeDB(docs, course_id=course['id'])
-                    print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍 SE ESTA CAMBIANDO A TRUe video")
+        courses_data = self.supabase.table("courses_tb").select("*").execute().data
+        for course in courses_data:
+            if course['videos_to_update']:
+                self.supabase.table("courses_tb").update({"status": "processing"}).eq("id", course['id']).execute()
+                self.transcriber = YouTubeTranscription(course_id=course['id'])
 
-                    self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
-                    self.supabase.table("courses_tb").update({"videos_to_update": ""}).eq("id", course['id']).execute()
-                    self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
-                    print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE video")
+                for video_url in course['videos_to_update']:
+                    if video_url:
+                        URL, title = self.transcriber.get_video_info(video_url)
+                        if URL and title:
+                            audio_url = URL
+                            docs = self.transcriber.url_to_docs(URL, title, audio_url)
+                            self.transcriber.docs_to_deeplakeDB(docs, course_id=course['id'])
+                
+                # Añadir los nuevos videos a la lista existente en lugar de reemplazarlos
+                existing_videos = course.get('reference_videos', [])
+                updated_videos = existing_videos + course['videos_to_update']
+
+                self.supabase.table("courses_tb").update({"reference_videos": updated_videos}).eq("id", course['id']).execute()
+                self.supabase.table("courses_tb").update({"videos_to_update": ""}).eq("id", course['id']).execute()
+                self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", course['id']).execute()
+                print(f"😍 Videos actualizados para el curso {course['id']}")
+
+    def process_courses_by_ids(self, course_ids=None):
+        if course_ids:
+            courses_data = self.supabase.table("courses_tb").select("*").in_("id", course_ids).execute().data
+        else:
+            courses_data = self.supabase.table("courses_tb").select("*").execute().data
         
+        for course in courses_data:
+            if course['reference_videos']:
+                self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
+
+                self.transcriber = YouTubeTranscription(course_id=course['id'])
+                print(f"\033[96mProcessing course: {course['id']}\033[0m")
+                for video_url in course['reference_videos']:
+                    if video_url:
+                        URL, title = self.transcriber.get_video_info(video_url)
+                        if URL and title:
+                            audio_url = URL  # La URL del video de YouTube será usada para descargar el audio
+                            docs = self.transcriber.url_to_docs(URL, title, audio_url)
+                            if isinstance(docs, list):
+                                for doc in docs:
+                                    if isinstance(doc, Document):
+                                        self.lista_de_docs.append(doc)
+                            elif isinstance(docs, Document):
+                                self.lista_de_docs.append(docs)
+                            else:
+                                print(f"\033[91mSkipping non-Document item in docs: {docs}\033[0m")
+                print(f"\033[96mDocuments list: {self.lista_de_docs}\033[0m")
+                self.transcriber.docs_to_deeplakeDB(self.lista_de_docs, course_id=course['id'])
+                self.supabase.table("courses_tb").update({"local_video_processed": "TRUE"}).eq("id", course['id']).execute()
+
+                # Añadir los nuevos videos a la lista existente en lugar de reemplazarlos
+                existing_videos = course.get('reference_videos', [])
+                updated_videos = existing_videos + course['reference_videos']
+                self.supabase.table("courses_tb").update({"reference_videos": updated_videos}).eq("id", course['id']).execute()
+
+                print(f"\033[96mMarked local_video_processed as TRUE for course ID: {course['id']}\033[0m")
+                self.lista_de_docs = []
 
 
 class CourseProcessor:
@@ -233,11 +273,11 @@ class CourseProcessor:
 
         self.generate_report()
 
-    def process_course(self, course):
+    def process_course(self, course,override=False):
         reference_files = course["reference_files"]
         courseid = course["id"]
-
-        if reference_files and isinstance(reference_files, list) and course['local_pdf_processed'] != 'TRUE':
+    
+        if (reference_files and isinstance(reference_files, list) and course['local_pdf_processed'] != 'TRUE') or override==True:
             save=self.supabase.table("courses_tb").update({"local_pdf_processed": "TRUE"}).eq("id", courseid).execute()
             for ref_file in reference_files:
                 url = ref_file["url"]
@@ -262,11 +302,7 @@ class CourseProcessor:
 
         self.process_pdf(file_path=temp_file_path, courseid=courseid)
         os.unlink(temp_file_path)
-
-
-
     
-
     def vector_pdf_database(self,courseid,pages):
         print("vector_pdf_database")
 
@@ -275,8 +311,7 @@ class CourseProcessor:
 
         # print(save)
         # print("😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍😍  SE CAMBIO A  TRUE PDF")
-    
-    
+       
     def process_pdf(self,  courseid,file_path=None):
         print("funcion process_pdf")
         loader = PyPDFLoader(file_path)
@@ -299,31 +334,49 @@ class CourseProcessor:
         print("😁😁😁😁😁😁😁 estamos actualizando pdfs")
         course_list = self.supabase.table("courses_tb").select("*").execute().data
         for course in course_list:
-            # try:
-                if course["pdf_to_update"]:
-                    reference_files = course["pdf_to_update"]
-                    courseid = course["id"]
-                    self.supabase.table("courses_tb").update({"status": "processing"}).eq("id", courseid).execute()
+            if course["pdf_to_update"]:
+                reference_files = course["pdf_to_update"]
+                courseid = course["id"]
+                self.supabase.table("courses_tb").update({"status": "processing"}).eq("id", courseid).execute()
 
+                if reference_files:
+                    for ref_file in reference_files:
+                        url = ref_file["url"]
+                        name = ref_file["name"]
+                        print("😁😁😁😁😁😁😁😁 este es el url del file que se esta actualizando", url)
+                        self.download_and_process_file(file_url=url, file_name=name, courseid=courseid)
 
-                    if reference_files:
-                        for ref_file in reference_files:
-                            url = ref_file["url"]
-                            name = ref_file["name"]
-                            print("😁😁😁😁😁😁😁😁 este es el url del file que se esta actualizando",url)
-                            self.download_and_process_file(file_url=url, file_name=name, courseid=courseid)
-                    else:
-                        print(f"No hay archivos de referencia para el curso {course['name']} ({course['id']})")
+                    # Añadir los nuevos archivos PDF a la lista existente en lugar de reemplazarlos
+                    existing_files = course.get('reference_files', [])
+                    updated_files = existing_files + reference_files
 
-                    self.successful_courses.append(f"{course['name']} ({course['id']})")
-                    self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", courseid).execute()
-                    self.supabase.table("courses_tb").update({"reference_files": "aqui quiero que añada lo que estaba en pdf_to updtae y lo añada a reference files "}).eq("id", courseid).execute()
+                    self.supabase.table("courses_tb").update({"reference_files": updated_files}).eq("id", courseid).execute()
                     self.supabase.table("courses_tb").update({"pdf_to_update": ""}).eq("id", courseid).execute()
+                    self.supabase.table("courses_tb").update({"status": "ready"}).eq("id", courseid).execute()
+                    print(f"😍 PDFs actualizados para el curso {course['id']}")
+
 
 
             # except Exception as e:
             #     print(f"Error al procesar el curso {course['name']} ({course['id']}): {str(e)} esta es la url {url}")
             #     self.failed_courses.append(f"{course['name']} ({course['id']}): {str(e)}")
+
+    def process_courses_by_ids(self, course_ids=None):
+        if course_ids:
+            course_list = self.supabase.table("courses_tb").select("*").in_("id", course_ids).execute().data
+        else:
+            course_list = self.supabase.table("courses_tb").select("*").execute().data
+
+        for course in course_list:
+            try:
+                print(course)
+                self.process_course(course,override=True)
+                self.successful_courses.append(f"{course['name']} ({course['id']})")
+            except Exception as e:
+                print(f"Error al procesar el curso {course['name']} ({course['id']}): {str(e)}")
+                self.failed_courses.append(f"{course['name']} ({course['id']}): {str(e)}")
+
+        self.generate_report()
 
 import tempfile
 from langchain_community.document_loaders import PyPDFLoader
