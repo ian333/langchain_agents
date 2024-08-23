@@ -308,3 +308,89 @@ async def create_article(
     except Exception as e:
         print(f"\033[91m[ERROR] Error creating article: {str(e)}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+
+@app.get("/path/{pid}")
+async def get_path(pid: str):
+    # Obtener el path con el ID dado
+    path_response = supabase_user.from_("paths_tb").select("*").eq("id", pid).single().execute()
+    if path_response.error:
+        raise HTTPException(status_code=404, detail=path_response.error.message)
+    path_data = path_response.data
+
+    # Obtener todos los topics del path
+    topics_response = supabase_user.from_("paths_topics_tb").select("*").eq("pathid", pid).order("order", ascending=True).execute()
+    if topics_response.error:
+        raise HTTPException(status_code=404, detail=topics_response.error.message)
+    topics = topics_response.data
+
+    # Obtener todos los subtopics de los topics
+    subtopics_response = supabase_user.from_("paths_subtopics_tb").select("*").in_("topicid", [topic['id'] for topic in topics]).order("order", ascending=True).execute()
+    if subtopics_response.error:
+        raise HTTPException(status_code=404, detail=subtopics_response.error.message)
+    subtopics = subtopics_response.data
+
+    # Obtener todos los prompts de los subtopics
+    prompts_response = supabase_user.from_("paths_prompts_tb").select("*").in_("subtopicid", [subtopic['id'] for subtopic in subtopics]).order("order", ascending=True).execute()
+    if prompts_response.error:
+        raise HTTPException(status_code=404, detail=prompts_response.error.message)
+    prompts = prompts_response.data
+
+    # Obtener el progreso del usuario
+    progress_response = supabase_user.from_("paths_progress_tb").select("*").eq("memberid", usertb['id']).eq("pathid", pid).execute()
+    if progress_response.error:
+        raise HTTPException(status_code=404, detail=progress_response.error.message)
+    progress = progress_response.data
+
+    # Obtener todos los artículos del path
+    articles_data_response = supabase_user.from_("paths_articles_tb").select("*").eq("pathid", pid).execute()
+    if articles_data_response.error:
+        raise HTTPException(status_code=404, detail=articles_data_response.error.message)
+    articles_data = articles_data_response.data
+
+    # Obtener los artículos basados en articles_data
+    articles_response = supabase_user.from_("articles_tb").select("*").in_("id", [article['articleid'] for article in articles_data]).execute()
+    if articles_response.error:
+        raise HTTPException(status_code=404, detail=articles_response.error.message)
+    articles = articles_response.data
+
+    # Construir el objeto final con la estructura de paths, topics, subtopics, prompts y artículos
+    path = {
+        **path_data,
+        "topics": [
+            {
+                **topic,
+                "subtopics": [
+                    {
+                        **subtopic,
+                        "prompts": [
+                            {
+                                **prompt,
+                                "progress": next((p for p in progress if p['promptid'] == prompt['id']), None)
+                            }
+                            for prompt in prompts if prompt['subtopicid'] == subtopic['id']
+                        ]
+                    }
+                    for subtopic in subtopics if subtopic['topicid'] == topic['id']
+                ]
+            }
+            for topic in topics
+        ],
+        "articles": [
+            article for article in articles if any(article_data['articleid'] == article['id'] for article_data in articles_data)
+        ]
+    }
+
+    # Obtener la información del curso basado en courseid
+    course_response = supabase_admin.from_("courses_tb").select("*").eq("id", path['courseid']).single().execute()
+    if course_response.error:
+        raise HTTPException(status_code=404, detail=course_response.error.message)
+    course_data = course_response.data
+
+    return {
+        "id": path["id"],
+        "name": path["name"],
+        "topics": path["topics"],
+        "articles": path["articles"],
+        "course": course_data
+    }
