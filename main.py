@@ -310,7 +310,7 @@ async def create_article(
         raise HTTPException(status_code=500, detail="Internal Server Error")
     
 
-@app.get("/path/{pid}")
+@app.post("/path/{pid}")
 async def get_path(pid: str):
     # Obtener el path con el ID dado
     path_response = supabase_user.from_("paths_tb").select("*").eq("id", pid).single().execute()
