@@ -352,7 +352,7 @@ async def get_path(
         pathid = str(uuid4())
         print(f"\033[94m[INFO] Recibiendo datos del formulario...\033[0m")
         name, description = await generate_path_details(prompt, pathid)
-        save_to_supabase("paths_tb", {
+        await save_to_supabase("paths_tb", {
             "id": pathid,
             "base_prompt": prompt,
             "name": name,
@@ -372,7 +372,7 @@ async def get_path(
         tasks = []
         for order, topic in enumerate(topics, start=1):
             topicid = str(uuid.uuid4())  # Generar un nuevo ID para el topic
-            save_to_supabase("paths_topics_tb", {
+            await save_to_supabase("paths_topics_tb", {
                 "id": topicid,
                 "pathid": pathid,
                 "name": topic,
@@ -413,12 +413,12 @@ async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, t
         # Crear la tarea para crear el artículo, sin await aquí
         article_task = create_article_for_topic(topic_name=topic_name, pathid=pathid, courseid=courseid, projectid=projectid, memberid=memberid, orgid=orgid)
 
-        # Generar y guardar los subtopics
         subtopics_task = asyncio.create_task(generate_subtopics_for_topic(topic_name, path_name))
-        subtopics=await asyncio.gather(subtopics_task)
-        
+        subtopics = (await asyncio.gather(subtopics_task))  # Desempaquetar la lista
+
+                
         # Crear tareas para guardar subtopics en paralelo
-        subtopic_tasks = [save_subtopics_to_db(pathid, topicid, [subtopic], path_name=path_name, topic_name=topic_name) for subtopic in subtopics]
+        subtopic_tasks = [save_subtopics_to_db(pathid, topicid, subtopic, path_name=path_name, topic_name=topic_name) for subtopic in subtopics]
 
         # Ejecutar la creación del artículo y los subtopics en paralelo
         await asyncio.gather(article_task, *subtopic_tasks)

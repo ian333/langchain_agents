@@ -112,22 +112,17 @@ async def generate_subtopics_for_topic(topic_name: str, path_name: str):
         raise
 
     
-import asyncio
-
-async def save_subtopics_to_db(pathid: str, topicid: str, subtopics: list, path_name: str, topic_name: str):
-    tasks = []  # Lista para almacenar todas las tareas
-
-    for order, subtopic in enumerate(subtopics, start=1):
-        subtopicid = str(uuid.uuid4())
-        print(f"\033[94m[INFO] Creando tarea para guardar subtema '{subtopic}' en la tabla 'paths_subtopics_tb' con orden {order}\033[0m")
-
-        # Crear tarea para guardar el subtema y procesar los prompts
-        task = asyncio.create_task(process_and_save_subtopic(pathid, topicid, subtopicid, subtopic, topic_name, path_name, order))
-        tasks.append(task)
+async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, topicid: str, courseid: str, projectid: str, memberid: str, orgid: str, path_name: str):
+    # Crear tareas para la creación de artículos y subtopics
+    tasks = [
+        asyncio.create_task(create_article_for_topic(topic_name=topic_name, pathid=pathid, courseid=courseid, projectid=projectid, memberid=memberid, orgid=orgid)),
+        asyncio.create_task(save_subtopics_to_db(pathid, topicid, topic_name, path_name))
+    ]
 
     # Ejecutar todas las tareas en paralelo
     await asyncio.gather(*tasks)
 
+import asyncio
 async def process_and_save_subtopic(pathid: str, topicid: str, subtopicid: str, subtopic_name: str, topic_name: str, path_name: str, order: int):
     # Create a task to generate prompts
     prompts_task = asyncio.create_task(generate_prompts_for_subtopics(subtopic_name, topic_name, path_name))
@@ -152,18 +147,10 @@ async def process_and_save_subtopic(pathid: str, topicid: str, subtopicid: str, 
     save=await asyncio.gather(save)
 
 
-async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, topicid: str, courseid: str, projectid: str, memberid: str, orgid: str, path_name: str):
-    # Crear tareas para la creación de artículos y subtopics
-    tasks = [
-        asyncio.create_task(create_article_for_topic(topic_name=topic_name, pathid=pathid, courseid=courseid, projectid=projectid, memberid=memberid, orgid=orgid)),
-        asyncio.create_task(save_subtopics_to_db(pathid, topicid, topic_name, path_name))
-    ]
-
-    # Ejecutar todas las tareas en paralelo
-    await asyncio.gather(*tasks)
 
 async def save_subtopics_to_db(pathid: str, topicid: str, subtopics: list, path_name: str, topic_name: str):
     tasks = []  # List to store all tasks
+    print(f"\033[94m[INFO] ESTE ES SUBTOPICS '{subtopics}' en la tabla 'paths_subtopics_tb' con orden\033[0m")
 
     for order, subtopic in enumerate(subtopics, start=1):
         subtopicid = str(uuid.uuid4())
@@ -178,7 +165,7 @@ async def save_subtopics_to_db(pathid: str, topicid: str, subtopics: list, path_
 
 
 
-def save_to_supabase(table_name: str, data: dict):
+async def save_to_supabase(table_name: str, data: dict):
     print(f"\033[94m[INFO] Guardando datos en la tabla '{table_name}'...\033[0m")
     try:
         result = supabase_user.table(table_name).insert(data).execute()
@@ -229,6 +216,9 @@ async def generate_prompts_for_subtopics(subtopic_name: str, topic_name: str, pa
 
 
 async def save_prompts_to_db(pathid: str, topicid: str, subtopicid: str, prompts: list):
+    print(f"\033[94m[INFO] ESTOS SON PROMPTS '{prompts}' \033[0m")
+
+    prompts=prompts[0]
     for order, prompt in enumerate(prompts, start=1):
         print(f"\033[94m[INFO] Guardando prompt '{prompt}' en la tabla 'paths_prompts_tb' con orden {order}\033[0m")
         result = supabase_user.table("paths_prompts_tb").insert({
