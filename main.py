@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import FastAPI, HTTPException, status, Form
 # main.py
 from uuid import uuid4
@@ -29,6 +31,7 @@ from multi_agents.sources import SourcesQA
 from multi_agents.web_search import WebSearch
 from multi_agents.follow_up import run_follow
 from multi_agents.articles_agent import ArticleRequest,make_article
+from multi_agents.path_agent import generate_path_details,generate_path_topics,save_to_supabase,save_subtopics_to_db,generate_subtopics_for_topic,create_article_for_topic
 from database.supa import supabase_user
 import os
 
@@ -72,6 +75,9 @@ supabase_user = SupabaseClient.get_user_client()
 
 from Config.config import set_language, get_language
 
+
+
+
 app = FastAPI()
 
 app.add_middleware(
@@ -85,6 +91,29 @@ app.add_middleware(
 HEADER_NAME = "X-API-KEY"
 api_key_header = Header(HEADER_NAME)
 
+
+from database.Vector_database import VectorDatabaseManager
+async def initialize_supabase_clients():
+    global supabase_admin, supabase_user
+    supabase_admin = SupabaseClient.get_admin_client()
+    supabase_user = SupabaseClient.get_user_client()
+
+# Inicialización de VectorDatabase en segundo plano
+async def initialize_vector_database():
+    global vector_db_manager
+    print("Se están inicializando las VectorDatabase en segundo plano...")
+    vector_db_manager = VectorDatabaseManager()
+    print("VectorDatabase inicializadas exitosamente.")
+
+# Función de arranque para inicializar componentes al iniciar la aplicación
+@app.on_event("startup")
+async def startup_event():
+    print("Iniciando la aplicación...")
+    background_tasks = BackgroundTasks()
+    background_tasks.add_task(initialize_supabase_clients)
+    background_tasks.add_task(initialize_vector_database)
+    print("Tareas de inicialización añadidas a BackgroundTasks.")
+    await background_tasks()
 
 
 
@@ -182,11 +211,11 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
         end_time = time.time()
         response_time = end_time - start_time
 
-        # Guardar el tiempo de respuesta en la base de datos
-        try:
-            supabase_user.table("responses_tb").update({"response_sec": response_time}).eq("id", id).execute()
-        except Exception as e:
-            print(f"\033[91mError al actualizar la base de datos con el tiempo de respuesta: {e}\033[0m")
+        # # Guardar el tiempo de respuesta en la base de datos
+        # try:
+        # #     supabase_user.table("responses_tb").update({"response_sec": response_time}).eq("id", id).execute()
+        # except Exception as e:
+        #     print(f"\033[91mError al actualizar la base de datos con el tiempo de respuesta: {e}\033[0m")
 
 
                 # Activar AI Companion aleatoriamente en segundo plano
@@ -245,14 +274,6 @@ async def create_thread(request_body: ChatRequest, background_tasks: BackgroundT
 
     return {"thread_id": new_thread_id}
 
-from database.Vector_database import VectorDatabaseManager
-print("Se estan inicializando las VectorDatabase")
-vector_db_manager = VectorDatabaseManager()
-print("Se estan inicializando las VectorDatabase")
-
-
-       
-
 @app.post("/query")
 async def query_database(request: QueryRequest):
     try:
@@ -308,89 +329,100 @@ async def create_article(
     except Exception as e:
         print(f"\033[91m[ERROR] Error creating article: {str(e)}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
 
-@app.post("/path/{pid}")
-async def get_path(pid: str):
-    # Obtener el path con el ID dado
-    path_response = supabase_user.from_("paths_tb").select("*").eq("id", pid).single().execute()
-    if path_response.error:
-        raise HTTPException(status_code=404, detail=path_response.error.message)
-    path_data = path_response.data
 
-    # Obtener todos los topics del path
-    topics_response = supabase_user.from_("paths_topics_tb").select("*").eq("pathid", pid).order("order", ascending=True).execute()
-    if topics_response.error:
-        raise HTTPException(status_code=404, detail=topics_response.error.message)
-    topics = topics_response.data
+import uuid
+import asyncio
+import time
+import uuid
+import asyncio
+import time  # Asegúrate de importar time para medir el tiempo
 
-    # Obtener todos los subtopics de los topics
-    subtopics_response = supabase_user.from_("paths_subtopics_tb").select("*").in_("topicid", [topic['id'] for topic in topics]).order("order", ascending=True).execute()
-    if subtopics_response.error:
-        raise HTTPException(status_code=404, detail=subtopics_response.error.message)
-    subtopics = subtopics_response.data
+@app.post("/path/new")
+async def get_path(
+    prompt: str = Form("Aprender Python desde cero"),
+    courseid: str = Form("661659eb-3afa-4c8e-8c4e-25a9115eed69"),
+    memberid: str = Form("8b013804-faa6-426e-bfcc-43227f58e3c8"),
+    pathid: str = Form(str(uuid.uuid4())),
+    projectid: str = Form("28722c50-cc1b-4b92-811b-0709320063e5"),
+    orgid: str = Form("6c0bfedb-258a-4c77-9bad-b0e87c0d9c98")
+):    
+    start_time = time.time()  # Capturar el tiempo de inicio
+    try:
+        pathid = str(uuid4())
+        print(f"\033[94m[INFO] Recibiendo datos del formulario...\033[0m")
+        name, description = await generate_path_details(prompt, pathid)
+        save_to_supabase("paths_tb", {
+            "id": pathid,
+            "base_prompt": prompt,
+            "name": name,
+            "courseid": courseid,
+            "description": description,
+            "memberid": memberid,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "isDefault": True,
+            "icon": "😍",
+            "level": 1,
+            "orgid": orgid,
+        })
+        
+        topics = await generate_path_topics(name)
 
-    # Obtener todos los prompts de los subtopics
-    prompts_response = supabase_user.from_("paths_prompts_tb").select("*").in_("subtopicid", [subtopic['id'] for subtopic in subtopics]).order("order", ascending=True).execute()
-    if prompts_response.error:
-        raise HTTPException(status_code=404, detail=prompts_response.error.message)
-    prompts = prompts_response.data
+        # Crear tareas para paralelizar la creación de artículos y subtopics
+        tasks = []
+        for order, topic in enumerate(topics, start=1):
+            topicid = str(uuid.uuid4())  # Generar un nuevo ID para el topic
+            save_to_supabase("paths_topics_tb", {
+                "id": topicid,
+                "pathid": pathid,
+                "name": topic,
+                "order": order,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+            
+            # Crear tareas para la generación de artículos y subtopics
+            task = asyncio.create_task(create_article_and_subtopics_for_topic(
+                topic_name=topic,
+                pathid=pathid,
+                topicid=topicid,
+                courseid=courseid,
+                projectid=projectid,
+                memberid=memberid,
+                orgid=orgid,
+                path_name=name
+            ))
+            tasks.append(task)
 
-    # Obtener el progreso del usuario
-    progress_response = supabase_user.from_("paths_progress_tb").select("*").eq("memberid", usertb['id']).eq("pathid", pid).execute()
-    if progress_response.error:
-        raise HTTPException(status_code=404, detail=progress_response.error.message)
-    progress = progress_response.data
+        # Ejecutar todas las tareas en paralelo
+        await asyncio.gather(*tasks)
 
-    # Obtener todos los artículos del path
-    articles_data_response = supabase_user.from_("paths_articles_tb").select("*").eq("pathid", pid).execute()
-    if articles_data_response.error:
-        raise HTTPException(status_code=404, detail=articles_data_response.error.message)
-    articles_data = articles_data_response.data
+        end_time = time.time()  # Capturar el tiempo al final
+        duration = end_time - start_time  # Calcular la duración
+        print(f"\033[92m[INFO] Path creado exitosamente en {duration:.2f} segundos.\033[0m")
 
-    # Obtener los artículos basados en articles_data
-    articles_response = supabase_user.from_("articles_tb").select("*").in_("id", [article['articleid'] for article in articles_data]).execute()
-    if articles_response.error:
-        raise HTTPException(status_code=404, detail=articles_response.error.message)
-    articles = articles_response.data
+        return {"id": pathid, "duration": f"{duration:.2f} segundos"}
 
-    # Construir el objeto final con la estructura de paths, topics, subtopics, prompts y artículos
-    path = {
-        **path_data,
-        "topics": [
-            {
-                **topic,
-                "subtopics": [
-                    {
-                        **subtopic,
-                        "prompts": [
-                            {
-                                **prompt,
-                                "progress": next((p for p in progress if p['promptid'] == prompt['id']), None)
-                            }
-                            for prompt in prompts if prompt['subtopicid'] == subtopic['id']
-                        ]
-                    }
-                    for subtopic in subtopics if subtopic['topicid'] == topic['id']
-                ]
-            }
-            for topic in topics
-        ],
-        "articles": [
-            article for article in articles if any(article_data['articleid'] == article['id'] for article_data in articles_data)
-        ]
-    }
+    except Exception as e:
+        print(f"\033[91m[ERROR] Error creando el Path: {str(e)}\033[0m")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
-    # Obtener la información del curso basado en courseid
-    course_response = supabase_admin.from_("courses_tb").select("*").eq("id", path['courseid']).single().execute()
-    if course_response.error:
-        raise HTTPException(status_code=404, detail=course_response.error.message)
-    course_data = course_response.data
+# Función para manejar la creación de artículos y subtopics en paralelo
+# Función para manejar la creación de artículos y subtopics en paralelo
+async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, topicid: str, courseid: str, projectid: str, memberid: str, orgid: str, path_name: str):
+    try:
+        # Crear la tarea para crear el artículo, sin await aquí
+        article_task = create_article_for_topic(topic_name=topic_name, pathid=pathid, courseid=courseid, projectid=projectid, memberid=memberid, orgid=orgid)
 
-    return {
-        "id": path["id"],
-        "name": path["name"],
-        "topics": path["topics"],
-        "articles": path["articles"],
-        "course": course_data
-    }
+        # Generar y guardar los subtopics
+        subtopics_task = asyncio.create_task(generate_subtopics_for_topic(topic_name, path_name))
+        subtopics=await asyncio.gather(subtopics_task)
+        
+        # Crear tareas para guardar subtopics en paralelo
+        subtopic_tasks = [save_subtopics_to_db(pathid, topicid, [subtopic], path_name=path_name, topic_name=topic_name) for subtopic in subtopics]
+
+        # Ejecutar la creación del artículo y los subtopics en paralelo
+        await asyncio.gather(article_task, *subtopic_tasks)
+
+    except Exception as e:
+        print(f"\033[91m[ERROR] Error en create_article_and_subtopics_for_topic: {str(e)}\033[0m")
+        raise
