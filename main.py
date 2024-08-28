@@ -344,7 +344,8 @@ async def get_path(
     courseid: str = Form("661659eb-3afa-4c8e-8c4e-25a9115eed69"),
     memberid: str = Form("8b013804-faa6-426e-bfcc-43227f58e3c8"),
     projectid: str = Form("28722c50-cc1b-4b92-811b-0709320063e5"),
-    orgid: str = Form("6c0bfedb-258a-4c77-9bad-b0e87c0d9c98")
+    orgid: str = Form("6c0bfedb-258a-4c77-9bad-b0e87c0d9c98"),
+    isdeafult: boolean =False
 ):    
     start_time = time.time()  # Capturar el tiempo de inicio
     try:
