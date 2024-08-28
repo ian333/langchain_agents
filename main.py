@@ -8,7 +8,12 @@ import time
 import asyncio
 import random
 
-
+import uuid
+import asyncio
+import time
+from fastapi import FastAPI, HTTPException, status, Form, BackgroundTasks
+from datetime import datetime, timezone
+from uuid import uuid4
 from fastapi import FastAPI, HTTPException, Security, BackgroundTasks, Header, status
 from langchain.agents import initialize_agent, AgentType
 from langchain.callbacks.streaming_stdout_final_only import FinalStreamingStdOutCallbackHandler
@@ -331,27 +336,25 @@ async def create_article(
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-import uuid
-import asyncio
-import time
-import uuid
-import asyncio
-import time  # Asegúrate de importar time para medir el tiempo
+
 
 @app.post("/path/new")
 async def get_path(
+    background_tasks: BackgroundTasks,
     prompt: str = Form("Aprender Python desde cero"),
     courseid: str = Form("661659eb-3afa-4c8e-8c4e-25a9115eed69"),
     memberid: str = Form("8b013804-faa6-426e-bfcc-43227f58e3c8"),
     projectid: str = Form("28722c50-cc1b-4b92-811b-0709320063e5"),
     orgid: str = Form("6c0bfedb-258a-4c77-9bad-b0e87c0d9c98"),
-    isdeafult: boolean =False
-):    
+    isDefault: bool = False
+):
     start_time = time.time()  # Capturar el tiempo de inicio
+    pathid = str(uuid4())
     try:
-        pathid = str(uuid4())
         print(f"\033[94m[INFO] Recibiendo datos del formulario...\033[0m")
         name, description = await generate_path_details(prompt, pathid)
+        
+        # Guardar pathid en Supabase
         await save_to_supabase("paths_tb", {
             "id": pathid,
             "base_prompt": prompt,
@@ -360,14 +363,32 @@ async def get_path(
             "description": description,
             "memberid": memberid,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "isDefault": True,
+            "isDefault": isDefault,
             "icon": "😍",
             "level": 1,
             "orgid": orgid,
         })
-        
-        topics = await generate_path_topics(path_name=name,max_items=5,language="en")
 
+        # Generar topics
+        topics = await generate_path_topics(path_name=name, max_items=5, language="en")
+        
+        # Iniciar las tareas en segundo plano
+        background_tasks.add_task(process_remaining_tasks, topics, pathid, name, courseid, projectid, memberid, orgid)
+        
+        duration = time.time() - start_time  # Calcular la duración
+        print(f"\033[92m[INFO] Path creado exitosamente en {duration:.2f} segundos.\033[0m")
+
+        # Retornar el pathid, topics, y duración
+        return {"id": pathid, "topics": topics, "duration": f"{duration:.2f} segundos"}
+
+    except Exception as e:
+        print(f"\033[91m[ERROR] Error creando el Path: {str(e)}\033[0m")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+# Función que procesa las tareas restantes en segundo plano
+async def process_remaining_tasks(topics, pathid, name, courseid, projectid, memberid, orgid):
+    try:
         # Crear tareas para paralelizar la creación de artículos y subtopics
         tasks = []
         for order, topic in enumerate(topics, start=1):
@@ -396,17 +417,10 @@ async def get_path(
         # Ejecutar todas las tareas en paralelo
         await asyncio.gather(*tasks)
 
-        end_time = time.time()  # Capturar el tiempo al final
-        duration = end_time - start_time  # Calcular la duración
-        print(f"\033[92m[INFO] Path creado exitosamente en {duration:.2f} segundos.\033[0m")
-
-        return {"id": pathid, "duration": f"{duration:.2f} segundos"}
-
     except Exception as e:
-        print(f"\033[91m[ERROR] Error creando el Path: {str(e)}\033[0m")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        print(f"\033[91m[ERROR] Error procesando las tareas en segundo plano: {str(e)}\033[0m")
 
-# Función para manejar la creación de artículos y subtopics en paralelo
+
 # Función para manejar la creación de artículos y subtopics en paralelo
 async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, topicid: str, courseid: str, projectid: str, memberid: str, orgid: str, path_name: str):
     try:
@@ -414,9 +428,8 @@ async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, t
         article_task = create_article_for_topic(topic_name=topic_name, pathid=pathid, courseid=courseid, projectid=projectid, memberid=memberid, orgid=orgid)
 
         subtopics_task = asyncio.create_task(generate_subtopics_for_topic(topic_name, path_name))
-        subtopics = (await asyncio.gather(subtopics_task))  # Desempaquetar la lista
+        subtopics = (await asyncio.gather(subtopics_task))[0]  # Desempaquetar la lista
 
-                
         # Crear tareas para guardar subtopics en paralelo
         subtopic_tasks = [save_subtopics_to_db(pathid, topicid, subtopic, path_name=path_name, topic_name=topic_name) for subtopic in subtopics]
 

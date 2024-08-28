@@ -77,7 +77,9 @@ class VideoQA:
         # print("Esto es vector DATABASE imprime de videoqa", result)
         
         return result
-
+import os
+import re
+import time
 
 class VectorDatabaseManager:
     def __init__(self):
@@ -85,37 +87,45 @@ class VectorDatabaseManager:
         self.initialize_all_instances()
 
     def initialize_all_instances(self):
-        path = "./skillstech"
-        datasets = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
-        print(f"Datasets found: {datasets}")
-        for dataset in datasets:
-            print(f"Processing dataset: {dataset}")
-            match = re.match(r'^(PDF|VIDEO)-(.+)$', dataset)
-            if not match:
-                print(f"Skipping invalid dataset name: {dataset}")
-                continue
-            prefix, courseid = match.groups()
-            print(f"Extracted courseid: {courseid}")
-            if prefix == "PDF":
-                self.instances[f"PDF-{courseid}"] = PDFQA(courseid)
-            elif prefix == "VIDEO":
-                self.instances[f"VIDEO-{courseid}"] = VideoQA(courseid)
-        print(f"Initialized instances: {self.instances}")
-
+        try:
+            path = "./skillstech"
+            datasets = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
+            print(f"Datasets found: {datasets}")
+            for dataset in datasets:
+                print(f"Processing dataset: {dataset}")
+                match = re.match(r'^(PDF|VIDEO)-(.+)$', dataset)
+                if not match:
+                    print(f"Skipping invalid dataset name: {dataset}")
+                    continue
+                prefix, courseid = match.groups()
+                print(f"Extracted courseid: {courseid}")
+                try:
+                    if prefix == "PDF":
+                        self.instances[f"PDF-{courseid}"] = PDFQA(courseid)
+                    elif prefix == "VIDEO":
+                        self.instances[f"VIDEO-{courseid}"] = VideoQA(courseid)
+                except Exception as e:
+                    print(f"Error initializing instance for {prefix}-{courseid}: {str(e)}")
+            print(f"Initialized instances: {self.instances}")
+        except Exception as e:
+            print(f"Error initializing instances: {str(e)}")
 
     async def query_instance(self, courseid: str, query_text: str, type: str):
-        instance_key = f"{type}-{courseid}"
-        print(f"Querying instance with key: {instance_key}")
-        if instance_key in self.instances:
-            print(f"Found instance for key: {instance_key}")
-            start_time = time.time()
-            instance = self.instances[instance_key]
-            result = await instance.query(query_text)
-            end_time = time.time()
-            response_time = end_time - start_time
-            print(f"Total Query Time for {instance_key}: {response_time:.4f} seconds")
-            # print(f"Query result: {result}")
-            return result
-        else:
-            print(f"No instance found for key: {instance_key}")
-            return {"error": f"No instance found for {type}-{courseid}"}
+        try:
+            instance_key = f"{type}-{courseid}"
+            print(f"Querying instance with key: {instance_key}")
+            if instance_key in self.instances:
+                print(f"Found instance for key: {instance_key}")
+                start_time = time.time()
+                instance = self.instances[instance_key]
+                result = await instance.query(query_text)
+                end_time = time.time()
+                response_time = end_time - start_time
+                print(f"Total Query Time for {instance_key}: {response_time:.4f} seconds")
+                return result
+            else:
+                print(f"No instance found for key: {instance_key}")
+                return {"error": f"No instance found for {type}-{courseid}"}
+        except Exception as e:
+            print(f"Error during query for {type}-{courseid}: {str(e)}")
+            return {"error": f"Failed to query instance {type}-{courseid}: {str(e)}"}
