@@ -54,6 +54,8 @@ El artículo debe incluir:
 - Mantén la coherencia en la estructura y el flujo del artículo.
 - Evita jergas técnicas excesivas, a menos que sean necesarias y se expliquen adecuadamente.
 
+CONTESTA EN EL IDIOMA QUE TE HABLAN
+
 Comienza el artículo a continuación:
 """
 

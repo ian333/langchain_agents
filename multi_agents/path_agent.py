@@ -53,16 +53,22 @@ async def generate_path_details(topic: str,pathid:str):
         raise
 
 
-async def generate_path_topics(path_name: str, max_items: int = 5):
+async def generate_path_topics(path_name: str, max_items: int = 5, language: str = 'es'):
     print(f"\033[94m[INFO] Iniciando la generación de temas para el Path: {path_name}\033[0m")
     try:
         llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
         print(f"\033[92m[INFO] Modelo LLM 'gemini-1.5-pro' inicializado correctamente.\033[0m")
         
+        # Configuración del agente dependiendo del idioma
+        if language == 'en':
+            state_modifier = f"You are a helpful assistant. Respond in a formal language focused on creating a clear and organized list of topics for a learning Path called '{path_name}'. Generate only the topics titles, and limit the output to {max_items} topics."
+        else:
+            state_modifier = f"Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista clara y organizada de temas para un Path de aprendizaje llamado '{path_name}'. Genera solo los títulos de los temas y limita la salida a {max_items} temas."
+
         app = create_react_agent(
             model=llm, 
             tools=[], 
-            state_modifier=f"Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista de temas claros y organizados para un Path de aprendizaje llamado '{path_name}' SOLO GENERA 8 TEMAS."
+            state_modifier=state_modifier
         )
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
         
@@ -77,7 +83,8 @@ async def generate_path_topics(path_name: str, max_items: int = 5):
         print(f"\033[91m[ERROR] Error al generar los temas del Path: {e}\033[0m")
         raise
 
-async def generate_subtopics_for_topic(topic_name: str, path_name: str):
+
+async def generate_subtopics_for_topic(topic_name: str, path_name: str, language: str = 'es', max_subtopics: int = 5):
     print(f"\033[94m[INFO] Iniciando la generación de subtemas para el topic: {topic_name} en el Path: {path_name}\033[0m")
 
     try:
@@ -88,11 +95,16 @@ async def generate_subtopics_for_topic(topic_name: str, path_name: str):
         raise
 
     try:
-        # Crear el agente para la generación de subtopics
+        # Configurar el agente dependiendo del idioma
+        if language == 'en':
+            state_modifier = f"You are a helpful assistant. Respond in a formal language focused on creating a clear and organized list of subtopics for a topic called '{topic_name}' within the Path '{path_name}'. Generate only the subtopics and limit the output to {max_subtopics} subtopics."
+        else:
+            state_modifier = f"Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista clara y organizada de subtemas para un topic llamado '{topic_name}' dentro del Path '{path_name}'. Genera solo subtemas y limita la salida a {max_subtopics} subtemas."
+
         app = create_react_agent(
             model=llm, 
             tools=[], 
-            state_modifier=f"Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista de subtemas claros y organizados para un topic llamado '{topic_name}' dentro del Path '{path_name}'. Genera solo subtemas sin encabezados o markdown."
+            state_modifier=state_modifier
         )
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
 
@@ -179,7 +191,7 @@ async def save_to_supabase(table_name: str, data: dict):
         print(f"\033[91m[ERROR] Error al guardar en la tabla '{table_name}': {str(e)}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-async def generate_prompts_for_subtopics(subtopic_name: str, topic_name: str, path_name: str):
+async def generate_prompts_for_subtopics(subtopic_name: str, topic_name: str, path_name: str, max_prompts: int = 5):
     print(f"\033[94m[INFO] Iniciando la generación de prompts para el subtema: {subtopic_name} dentro del topic: {topic_name} del Path: {path_name}\033[0m")
 
     try:
@@ -194,12 +206,12 @@ async def generate_prompts_for_subtopics(subtopic_name: str, topic_name: str, pa
         app = create_react_agent(
             model=llm, 
             tools=[], 
-            state_modifier=f"""Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista de prompts claros y útiles para un subtema llamado '{subtopic_name}' dentro del topic '{topic_name}' en el Path '{path_name}'solo genera y responde con las puras preguntas , NO RESPONDAS EN MARKDOWN, DE ESTA MANERAEXTRAEMOS LOS SUBTOPICS  prompts = [prompt.strip() for prompt in messages["messages"][-1].content.split("\n") if prompt.strip()]"""
+            state_modifier=f"""Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista de prompts claros y útiles para un subtema llamado '{subtopic_name}' dentro del topic '{topic_name}' en el Path '{path_name}'solo genera y responde con las puras preguntas , NO RESPONDAS EN MARKDOWN, DE ESTA MANERAEXTRAEMOS LOS SUBTOPICS  prompts = [prompt.strip() for prompt in messages["messages"][-1].content.split("\n") if prompt.strip()],OTRA COSA SUPER IMPORTANTE , CONTESTA EN EL IDIOMA QUE SE TE HABLAOTRA COSA SUPER IMPORTANTE , CONTESTA EN EL IDIOMA QUE SE TE HABLA, PERO PREFERIBLEMENTE CONTESTA EN INGLES"""
         )
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
 
         # Generar los prompts
-        prompt_template = f"Por favor, genera una lista de prompts para el subtema '{subtopic_name}' dentro del topic '{topic_name}' en el Path '{path_name}'."
+        prompt_template = f"Por favor, genera una lista de prompts para el subtema '{subtopic_name}' dentro del topic '{topic_name}' en el Path '{path_name} solo genera {max_prompts} estas preguntas , recuerda tienen que ser mas interesantes las preguntas que porque la pregunta guiara todo el proceso , entonces haz preguntas largas complejas que interesen al usuario OTRA COSA SUPER IMPORTANTE , CONTESTA EN EL IDIOMA QUE SE TE HABLA '."
         messages = app.invoke({"messages": [("human", prompt_template)]})
         prompts = [prompt.strip() for prompt in messages["messages"][-1].content.split("\n") if prompt.strip()]
         print(f"\033[92m[INFO] Prompts generados con éxito: {prompts}\033[0m")

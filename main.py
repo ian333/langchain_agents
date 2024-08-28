@@ -343,7 +343,6 @@ async def get_path(
     prompt: str = Form("Aprender Python desde cero"),
     courseid: str = Form("661659eb-3afa-4c8e-8c4e-25a9115eed69"),
     memberid: str = Form("8b013804-faa6-426e-bfcc-43227f58e3c8"),
-    pathid: str = Form(str(uuid.uuid4())),
     projectid: str = Form("28722c50-cc1b-4b92-811b-0709320063e5"),
     orgid: str = Form("6c0bfedb-258a-4c77-9bad-b0e87c0d9c98")
 ):    
@@ -366,7 +365,7 @@ async def get_path(
             "orgid": orgid,
         })
         
-        topics = await generate_path_topics(name)
+        topics = await generate_path_topics(path_name=name,max_items=5,language="en")
 
         # Crear tareas para paralelizar la creación de artículos y subtopics
         tasks = []
