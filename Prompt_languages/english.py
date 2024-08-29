@@ -205,3 +205,140 @@ Responde proporcionando insights y sugerencias adicionales para el usuario.
                     {web}
 
 """
+
+
+
+
+
+
+
+# english.py
+# Prompt template for path details
+path_prompt_template = """
+Based on the following topic: {topic}, please generate an appropriate name for a learning Path, followed by a detailed description.
+
+The name should be brief, catchy, and reflect the focus of the Path.
+
+The description should include:
+1. Path Objective: Briefly explain the purpose and key objectives.
+2. Covered Content: Mention the main topics and skills that users will learn.
+3. Benefits: Detail the benefits of following this Path and how it can be applied in practice.
+
+Please separate the name and description by two newlines `\n\n`.
+
+EXAMPLE:
+
+"Introduction to Machine Learning for Beginners"
+"This course will cover the basics of machine learning, including supervised and unsupervised learning techniques, data preprocessing, and model evaluation. Students will learn how to apply these techniques to solve real-world problems."
+
+"Advanced Data Science Techniques"
+"Explore advanced data science techniques, such as deep learning, natural language processing, and computer vision. This path is designed for learners with a strong foundation in data science and aims to take their skills to the next level."
+
+"Web Development Bootcamp"
+"Learn the fundamentals of web development, including HTML, CSS, JavaScript, and modern frameworks like React. This course will provide you with the skills needed to build responsive and dynamic websites from scratch."
+
+"Digital Marketing Strategies"
+"Understand the core concepts of digital marketing, including SEO, content marketing, social media marketing, and analytics. This path will equip you with the tools and strategies to create effective online marketing campaigns."
+
+"Cybersecurity Essentials"
+"Gain a solid understanding of cybersecurity principles, including risk management, threat analysis, and defensive strategies. This course is ideal for anyone looking to start a career in cybersecurity or enhance their knowledge in the field."
+"""
+
+# State modifier for generating path details
+state_modifier_path_details = """
+You are a helpful assistant. Your task is to generate a clear and attractive name and description for a learning Path focused on '{topic}'. Please respond in plain text, not in markdown. 
+
+Important: The name should be on the first line. The description should follow on the second line, separated by two newline characters ('\\n\\n') from the name. The output will be split at these newlines to extract the name and description separately.
+
+EXAMPLE:
+
+"Introduction to Machine Learning for Beginners"
+"This course will cover the basics of machine learning, including supervised and unsupervised learning techniques, data preprocessing, and model evaluation. Students will learn how to apply these techniques to solve real-world problems."
+
+"Advanced Data Science Techniques"
+"Explore advanced data science techniques, such as deep learning, natural language processing, and computer vision. This path is designed for learners with a strong foundation in data science and aims to take their skills to the next level."
+
+"Web Development Bootcamp"
+"Learn the fundamentals of web development, including HTML, CSS, JavaScript, and modern frameworks like React. This course will provide you with the skills needed to build responsive and dynamic websites from scratch."
+
+"Digital Marketing Strategies"
+"Understand the core concepts of digital marketing, including SEO, content marketing, social media marketing, and analytics. This path will equip you with the tools and strategies to create effective online marketing campaigns."
+
+"Cybersecurity Essentials"
+"Gain a solid understanding of cybersecurity principles, including risk management, threat analysis, and defensive strategies. This course is ideal for anyone looking to start a career in cybersecurity or enhance their knowledge in the field."
+"""
+
+# State modifier for generating path topics
+state_modifier_path_topics = """
+You are a helpful assistant. Your task is to generate a clear and organized list of topics for a learning Path called '{path_name}'. 
+
+Important: Respond only with the titles of the topics, one per line. The output will be used as a simple list of topics, so ensure each topic title is concise and informative. Limit the output to {max_items} topics.
+
+EXAMPLES:
+
+1. "Introduction to Machine Learning"
+2. "Data Preprocessing Techniques"
+3. "Supervised Learning Algorithms"
+4. "Unsupervised Learning Methods"
+5. "Model Evaluation and Tuning"
+"""
+
+# State modifier for generating subtopics
+state_modifier_subtopics = """
+You are a helpful assistant. Your task is to generate a clear and organized list of subtopics for a specific topic called '{topic_name}' within the learning Path '{path_name}'. 
+
+Important: Respond only with the subtopics, one per line, without headers or additional formatting. The output will be used as a simple list of subtopics, so ensure each subtopic is clear and relevant. Limit the output to {max_subtopics} subtopics.
+
+EXAMPLES:
+
+1. "Understanding Linear Regression"
+2. "Applying Logistic Regression"
+3. "Decision Trees and Random Forests"
+4. "K-Nearest Neighbors"
+5. "Support Vector Machines"
+"""
+
+# Prompt template for generating path topics
+topic_prompt_template = """
+Please generate a list of topic titles for a learning Path called '{path_name}'. The focus should be on providing a logical and clear educational flow.
+
+Important: Respond only with the titles or the topics, one per line, without any additional text or formatting. The output will be treated as a list of topics.
+
+EXAMPLES:
+
+1. "Introduction to Web Development"
+2. "HTML and CSS Basics"
+3. "JavaScript for Beginners"
+4. "Responsive Design"
+5. "Building Web Applications with React"
+"""
+
+# Prompt template for generating subtopics
+subtopic_prompt_template = """
+Please generate a list of subtopics for the topic '{topic_name}' within the Path '{path_name}'.
+
+Important: Respond only with the subtopics, one per line, without headers or additional formatting. The output will be used as a list of subtopics, so each line should represent a single subtopic.
+
+EXAMPLES:
+
+1. "Understanding Flexbox in CSS"
+2. "Implementing Grid Layouts"
+3. "Building Responsive Navigation Menus"
+4. "Using Media Queries"
+5. "Optimizing Images for Web Performance"
+"""
+
+# Prompt template for generating prompts for subtopics
+prompts_for_subtopics_template = """
+Please generate a list of prompts for the subtopic '{subtopic_name}' within the topic '{topic_name}' in the Path '{path_name}'.
+
+Important: Only generate {max_prompts} questions. Remember, these questions will guide the entire learning process, so make them long and complex enough to engage the user. Respond with each question on a new line without additional formatting or text.
+
+EXAMPLES:
+
+1. "What are the key principles of Flexbox in CSS, and how can they be applied to create a responsive layout?"
+2. "How does the CSS Grid system differ from Flexbox, and in what scenarios would you prefer one over the other?"
+3. "Explain the process of creating a responsive navigation menu using CSS and JavaScript. What challenges might arise, and how can they be addressed?"
+4. "What are media queries, and how can they be used to create a responsive design that adapts to different screen sizes?"
+5. "Discuss the importance of optimizing images for web performance. What techniques can be used to reduce file size without compromising quality?"
+"""

@@ -152,3 +152,67 @@ Responde proporcionando insights y sugerencias adicionales para el usuario.
                     {web}
 
 """
+
+
+
+
+# prompts.py
+
+# spanish.py
+
+# Prompt template for path details
+path_prompt_template = """
+Basado en el siguiente tema: {topic}, por favor genera un nombre adecuado para un Path de aprendizaje, seguido de una descripción detallada.
+
+El nombre debe ser breve, atractivo y reflejar el enfoque del Path.
+
+La descripción debe incluir:
+1. Objetivo del Path: Explica brevemente cuál es el propósito y los objetivos clave.
+2. Contenidos cubiertos: Menciona los principales temas y habilidades que los usuarios aprenderán.
+3. Beneficios: Detalla los beneficios de seguir este Path y cómo puede aplicarse en la práctica.
+
+Con esto extraemos tu respuesta
+
+        content = messages["messages"][-1].content.split(" \ n \ n", 1)
+        name = content[0].strip()
+        description = content[1].strip()
+
+Necesito que me des SOLO EL NOMBRE Y DESPUES LA DESCRIPCION SEPARA POR 
+
+ \ n \ n
+
+ EXAMPLE
+
+ "CUALQUIER NOMBRE DE EL CURSO QUE SEA INTERESANTE Y AUTOEXPLICABLE"
+ "LA DESCRIPCION DEL CURSO PERO TODO JUNTO SIN LA SEPARACION "
+"""
+
+# State modifier for generating path details
+state_modifier_path_details = """
+Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear un nombre y una descripción clara y atractiva para un Path de aprendizaje sobre '{topic}', responde en texto plano por favor no en markdown.
+"""
+
+# State modifier for generating path topics
+state_modifier_path_topics = """
+Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista clara y organizada de temas para un Path de aprendizaje llamado '{path_name}'. Genera solo los títulos de los temas y limita la salida a {max_items} temas.
+"""
+
+# State modifier for generating subtopics
+state_modifier_subtopics = """
+Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista clara y organizada de subtemas para un topic llamado '{topic_name}' dentro del Path '{path_name}'. Genera solo subtemas y limita la salida a {max_subtopics} subtemas.
+"""
+
+# Prompt template for generating path topics
+topic_prompt_template = """
+Por favor, genera una lista de títulos de temas para un Path de aprendizaje llamado '{path_name}', con un enfoque en proporcionar un flujo educativo lógico y claro. POR FAVOR RESPONDE SOLO CON LOS TÍTULOS O CON LOS TEMAS, solo la lista de los temas.
+"""
+
+# Prompt template for generating subtopics
+subtopic_prompt_template = """
+Por favor, genera una lista de subtemas para el topic '{topic_name}' dentro del Path '{path_name}'. Responde solo con los subtemas, sin encabezados ni formato adicional.
+"""
+
+# Prompt template for generating prompts for subtopics
+prompts_for_subtopics_template = """
+Por favor, genera una lista de prompts para el subtema '{subtopic_name}' dentro del topic '{topic_name}' en el Path '{path_name}'. Solo genera {max_prompts} preguntas. Recuerda que deben ser preguntas interesantes, ya que guiarán todo el proceso. Por lo tanto, haz preguntas largas y complejas que interesen al usuario.
+"""

@@ -9,22 +9,36 @@ import os
 from decouple import config
 import uuid
 
+from Prompt_languages import english, spanish
+
+# Configuración del idioma
+language = "english"  # Cambiar a "spanish" para español
+
+# Importar las configuraciones según el idioma seleccionado
+if language == "english":
+    path_prompt_template = english.path_prompt_template
+    state_modifier_path_details = english.state_modifier_path_details
+    state_modifier_path_topics = english.state_modifier_path_topics
+    state_modifier_subtopics = english.state_modifier_subtopics
+    topic_prompt_template = english.topic_prompt_template
+    subtopic_prompt_template = english.subtopic_prompt_template
+    prompts_for_subtopics_template = english.prompts_for_subtopics_template
+
+elif language == "spanish":
+    path_prompt_template = spanish.path_prompt_template
+    state_modifier_path_details = spanish.state_modifier_path_details
+    state_modifier_path_topics = spanish.state_modifier_path_topics
+    state_modifier_subtopics = spanish.state_modifier_subtopics
+    topic_prompt_template = spanish.topic_prompt_template
+    subtopic_prompt_template = spanish.subtopic_prompt_template
+    prompts_for_subtopics_template = spanish.prompts_for_subtopics_template
+
+# Ahora puedes usar las variables según el idioma seleccionado en tu código.
+
+
 # Configurar la API de Google
 os.environ["GOOGLE_API_KEY"] = config("GOOGLE_API_KEY")
 
-# Plantilla para generar la descripción y el nombre del Path
-path_prompt_template = """
-Basado en el siguiente tema: {topic}, por favor genera un nombre adecuado para un Path de aprendizaje, seguido de una descripción detallada.
-
-El nombre debe ser breve, atractivo y reflejar el enfoque del Path.
-
-La descripción debe incluir:
-1. **Objetivo del Path**: Explica brevemente cuál es el propósito y los objetivos clave.
-2. **Contenidos cubiertos**: Menciona los principales temas y habilidades que los usuarios aprenderán.
-3. **Beneficios**: Detalla los beneficios de seguir este Path y cómo puede aplicarse en la práctica.
-
-por favor no contestes en markdown, solo texto por favor 
-"""
 
 
 async def generate_path_details(topic: str,pathid:str):
@@ -36,7 +50,7 @@ async def generate_path_details(topic: str,pathid:str):
         app = create_react_agent(
             model=llm, 
             tools=[], 
-            state_modifier=f"Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear un nombre y una descripción clara y atractiva para un Path de aprendizaje sobre '{topic}', responde en texto plano por favor no en markdown."
+            state_modifier=state_modifier_path_details
         )
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
         
@@ -60,11 +74,6 @@ async def generate_path_topics(path_name: str, max_items: int = 5, language: str
         print(f"\033[92m[INFO] Modelo LLM 'gemini-1.5-pro' inicializado correctamente.\033[0m")
         
         # Configuración del agente dependiendo del idioma
-        if language == 'en':
-            state_modifier = f"You are a helpful assistant. Respond in a formal language focused on creating a clear and organized list of topics for a learning Path called '{path_name}'. Generate only the topics titles, and limit the output to {max_items} topics."
-        else:
-            state_modifier = f"Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista clara y organizada de temas para un Path de aprendizaje llamado '{path_name}'. Genera solo los títulos de los temas y limita la salida a {max_items} temas."
-
         app = create_react_agent(
             model=llm, 
             tools=[], 
@@ -96,10 +105,7 @@ async def generate_subtopics_for_topic(topic_name: str, path_name: str, language
 
     try:
         # Configurar el agente dependiendo del idioma
-        if language == 'en':
-            state_modifier = f"You are a helpful assistant. Respond in a formal language focused on creating a clear and organized list of subtopics for a topic called '{topic_name}' within the Path '{path_name}'. Generate only the subtopics and limit the output to {max_subtopics} subtopics."
-        else:
-            state_modifier = f"Eres un asistente útil. Responde en un lenguaje formal y enfocado en crear una lista clara y organizada de subtemas para un topic llamado '{topic_name}' dentro del Path '{path_name}'. Genera solo subtemas y limita la salida a {max_subtopics} subtemas."
+        state_modifier = state_modifier_subtopics
 
         app = create_react_agent(
             model=llm, 
@@ -109,7 +115,7 @@ async def generate_subtopics_for_topic(topic_name: str, path_name: str, language
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
 
         # Generar los subtopics
-        subtopic_prompt = f"Por favor, genera una lista de subtemas para el topic '{topic_name}' dentro del Path '{path_name}'. Responde solo con los subtemas, sin encabezados ni formato adicional."
+        subtopic_prompt = subtopic_prompt_template
         messages = app.invoke({"messages": [("human", subtopic_prompt)]})
         
         # Filtrar los subtemas para eliminar encabezados y otros elementos no deseados
@@ -211,7 +217,7 @@ async def generate_prompts_for_subtopics(subtopic_name: str, topic_name: str, pa
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
 
         # Generar los prompts
-        prompt_template = f"Por favor, genera una lista de prompts para el subtema '{subtopic_name}' dentro del topic '{topic_name}' en el Path '{path_name} solo genera {max_prompts} estas preguntas , recuerda tienen que ser mas interesantes las preguntas que porque la pregunta guiara todo el proceso , entonces haz preguntas largas complejas que interesen al usuario OTRA COSA SUPER IMPORTANTE , CONTESTA EN EL IDIOMA QUE SE TE HABLA '."
+        prompt_template = prompts_for_subtopics_template
         messages = app.invoke({"messages": [("human", prompt_template)]})
         prompts = [prompt.strip() for prompt in messages["messages"][-1].content.split("\n") if prompt.strip()]
         print(f"\033[92m[INFO] Prompts generados con éxito: {prompts}\033[0m")
