@@ -428,7 +428,7 @@ async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, t
         article_task = create_article_for_topic(topic_name=topic_name, pathid=pathid, courseid=courseid, projectid=projectid, memberid=memberid, orgid=orgid)
 
         subtopics_task = asyncio.create_task(generate_subtopics_for_topic(topic_name, path_name))
-        subtopics = (await asyncio.gather(subtopics_task))[0]  # Desempaquetar la lista
+        subtopics = (await asyncio.gather(subtopics_task))  # Desempaquetar la lista
 
         # Crear tareas para guardar subtopics en paralelo
         subtopic_tasks = [save_subtopics_to_db(pathid, topicid, subtopic, path_name=path_name, topic_name=topic_name) for subtopic in subtopics]
