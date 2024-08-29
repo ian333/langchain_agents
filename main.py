@@ -341,12 +341,12 @@ async def create_article(
 @app.post("/path/new")
 async def get_path(
     background_tasks: BackgroundTasks,
-    prompt: str = Form("Aprender Python desde cero"),
-    courseid: str = Form("661659eb-3afa-4c8e-8c4e-25a9115eed69"),
-    memberid: str = Form("8b013804-faa6-426e-bfcc-43227f58e3c8"),
-    projectid: str = Form("28722c50-cc1b-4b92-811b-0709320063e5"),
-    orgid: str = Form("6c0bfedb-258a-4c77-9bad-b0e87c0d9c98"),
-    isDefault: bool = False
+    prompt: str = Form(..., example="Aprender Python desde cero"),
+    courseid: str = Form(..., example="661659eb-3afa-4c8e-8c4e-25a9115eed69"),
+    memberid: str = Form(..., example="8b013804-faa6-426e-bfcc-43227f58e3c8"),
+    projectid: str = Form(..., example="28722c50-cc1b-4b92-811b-0709320063e5"),
+    orgid: str = Form(..., example="6c0bfedb-258a-4c77-9bad-b0e87c0d9c98"),
+    isDefault: bool = Form(..., example=True)
 ):
     start_time = time.time()  # Capturar el tiempo de inicio
     pathid = str(uuid4())
