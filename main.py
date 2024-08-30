@@ -439,3 +439,123 @@ async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, t
     except Exception as e:
         print(f"\033[91m[ERROR] Error en create_article_and_subtopics_for_topic: {str(e)}\033[0m")
         raise
+
+
+
+
+from pydantic import BaseModel
+# Definir el modelo para los datos del formulario
+class ExamRequest(BaseModel):
+    prompt: str
+    max_items: int
+
+# State modifier para generar preguntas del examen
+state_modifier_exam_generation = """
+You are a helpful assistant. Your task is to generate an exam based on the following prompt: '{prompt}'.
+
+Important: Generate only {max_items} questions. The questions should be varied in difficulty and should cover different aspects of the topic. Respond with each question on a new line without additional formatting or text.
+
+EXAMPLES:
+
+1. "Explain the concept of inheritance in object-oriented programming. Provide an example in Python."
+2. "What is the difference between a list and a tuple in Python? When would you use each one?"
+3. "Describe the process of creating a virtual environment in Python. Why is it important?"
+4. "How does exception handling work in Python? Provide an example using try, except, and finally."
+5. "What are Python decorators, and how are they used? Provide an example of a simple decorator."
+"""
+
+# Definir el endpoint para generar el examen
+@app.post("/exam/generate")
+async def generate_exam(prompt: str = Form(...), max_items: int = Form(5)):
+    try:
+        # Inicializar el modelo LLM
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+        
+        # Crear el agente con el state_modifier adecuado
+        app = create_react_agent(
+            model=llm, 
+            tools=[], 
+            state_modifier=state_modifier_exam_generation
+        )
+        
+        # Generar el examen
+        exam_prompt = f"Generate an exam based on the following topic: '{prompt}'"
+        messages = app.invoke({"messages": [("human", exam_prompt)]})
+        questions = [question.strip() for question in messages["messages"][-1].content.split("\n") if question.strip()]
+        
+        # Limitar el número de preguntas generadas al valor máximo especificado
+        questions = questions[:max_items]
+        
+        return {"questions": questions}
+    
+    except Exception as e:
+        print(f"\033[91m[ERROR] Error generating exam: {str(e)}\033[0m")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+
+from fastapi import FastAPI, HTTPException, Form
+from pydantic import BaseModel
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langgraph.prebuilt import create_react_agent
+import os
+from decouple import config
+
+# Configurar la API de Google
+os.environ["GOOGLE_API_KEY"] = config("GOOGLE_API_KEY")
+
+
+# Modelo para recibir la respuesta y la pregunta original
+class EvaluationRequest(BaseModel):
+    question: str
+    answer: str
+
+# State modifier para la evaluación de la respuesta
+state_modifier_evaluate_answer = """
+You are an experienced teacher. Your task is to evaluate the student's answer to the following question: '{question}'.
+
+Please provide two outputs:
+1. A quantitative score from 0 to 100 based on the accuracy, completeness, and relevance of the answer.
+2. A qualitative feedback that highlights the strengths and areas for improvement in the student's response.
+
+Respond in the following format:
+- Score: [Quantitative Score]
+- Feedback: [Qualitative Feedback]
+
+EXAMPLES:
+
+1. "Score: 85\nFeedback: The answer demonstrates a good understanding of the concept, but it could be improved by providing more specific examples."
+
+2. "Score: 92\nFeedback: Excellent response! The answer is well-structured and covers all key points, but be sure to elaborate more on the second point."
+
+3. "Score: 70\nFeedback: The answer is correct, but it lacks detail and depth. Consider expanding on the main ideas and providing examples."
+"""
+
+# Definir el endpoint para evaluar la respuesta
+@app.post("/answer/evaluate")
+async def evaluate_answer(question: str = Form(...), answer: str = Form(...)):
+    try:
+        # Inicializar el modelo LLM
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+        
+        # Crear el agente con el state_modifier adecuado
+        app = create_react_agent(
+            model=llm, 
+            tools=[], 
+            state_modifier=state_modifier_evaluate_answer
+        )
+        
+        # Preparar el prompt para la evaluación
+        evaluation_prompt = f"Evaluate the following answer: '{answer}' to the question: '{question}'"
+        messages = app.invoke({"messages": [("human", evaluation_prompt)]})
+        
+        # Extraer la calificación cuantitativa y cualitativa
+        response = messages["messages"][-1].content.strip().split("\n")
+        score = response[0].replace("Score: ", "").strip()
+        feedback = response[1].replace("Feedback: ", "").strip()
+        
+        return {"score": score, "feedback": feedback}
+    
+    except Exception as e:
+        print(f"\033[91m[ERROR] Error evaluating answer: {str(e)}\033[0m")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
