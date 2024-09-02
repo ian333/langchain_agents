@@ -150,6 +150,10 @@ async def chat_endpoint(request_body: ChatRequest, background_tasks: BackgroundT
     email = request_body.email
     orgid = request_body.organizationid
     web = request_body.web
+ 
+ 
+#  TODO : @ian333 QUITAR ESTA FUNCION DE CUSTOM AI
+
 
 
     if not threadid:
@@ -334,8 +338,6 @@ async def create_article(
     except Exception as e:
         print(f"\033[91m[ERROR] Error creating article: {str(e)}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
 
 
 @app.post("/path/new")

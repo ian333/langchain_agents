@@ -153,9 +153,6 @@ Responde proporcionando insights y sugerencias adicionales para el usuario.
 
 """
 
-
-
-
 # prompts.py
 
 # spanish.py

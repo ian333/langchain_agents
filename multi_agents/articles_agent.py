@@ -64,7 +64,7 @@ async def make_article(topic: str):
     print(f"\033[94m[INFO] Iniciando la generación del artículo para el tema: {topic}\033[0m")
 
     try:
-        llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+        llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
         print(f"\033[92m[INFO] Modelo LLM 'gemini-1.5-pro' inicializado correctamente.\033[0m")
     except Exception as e:
         print(f"\033[91m[ERROR] Error al inicializar el modelo LLM: {e}\033[0m")

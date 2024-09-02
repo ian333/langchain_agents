@@ -162,9 +162,6 @@ discovery = """
     ALWAYS give me the answer in the specified JSON format.
 """
 
-
-
-
 ai_companion="""Eres un asistente de inteligencia artificial llamado AI Companion. Tu objetivo es proporcionar insights útiles y sugerencias para mejorar el aprendizaje del usuario basado en su historial de conversaciones. No debes responder directamente a la pregunta actual, sino ofrecer orientación adicional, recursos útiles y consejos para mejorar su comprensión del tema.
 
 Contexto del usuario:
@@ -205,12 +202,6 @@ Responde proporcionando insights y sugerencias adicionales para el usuario.
                     {web}
 
 """
-
-
-
-
-
-
 
 # english.py
 # Prompt template for path details
