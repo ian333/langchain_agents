@@ -9,8 +9,13 @@ llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
 
 from fastapi import FastAPI, HTTPException, Form
 from pydantic import BaseModel, Field
+from uuid import uuid4
 
-
+# Define un modelo para los datos del formulario
+class ExamGenerateRequest(BaseModel):
+    prompt: str = Field(..., example="haz un examen complejo de física de cohetes avanzada")
+    max_items: int = Field(..., example=5)
+    memberid: str = Field(..., example="8b013804-faa6-426e-bfcc-43227f58e3c8")
 # Modelos Pydantic
 class Answer(BaseModel):
     question: str = Field(..., example="What is the difference between a cash game and a tournament in online poker?")
@@ -19,6 +24,7 @@ class Answer(BaseModel):
 class ExamRequest(BaseModel):
     courseid: str = Field(..., example="661659eb-3afa-4c8e-8c4e-25a9115eed69")
     memberid: str = Field(..., example="8b013804-faa6-426e-bfcc-43227f58e3c8")
+    exam_id: str = Field(..., example="3483c05c-0c1c-4f28-8238-f5d2ca61606c")
     answers: list[Answer] = Field(..., example=[
         {
             "question": "What is the difference between a cash game and a tournament in online poker?",
@@ -49,26 +55,6 @@ EXAMPLES:
 5. "What are Python decorators, and how are they used? Provide an example of a simple decorator."
 """
 
-# State modifier para la evaluación de la respuesta
-state_modifier_evaluate_answer = """
-You are an experienced teacher. Your task is to evaluate the student's answer to the following question: '{question}'.
-
-Please provide two outputs:
-1. A quantitative score from 0 to 100 based on the accuracy, completeness, and relevance of the answer.
-2. A qualitative feedback that highlights the strengths and areas for improvement in the student's response.
-
-Respond in the following format:
-- Score: [Quantitative Score]
-- Feedback: [Qualitative Feedback]
-
-EXAMPLES:
-
-1. "Score: 85\nFeedback: The answer demonstrates a good understanding of the concept, but it could be improved by providing more specific examples."
-
-2. "Score: 92\nFeedback: Excellent response! The answer is well-structured and covers all key points, but be sure to elaborate more on the second point."
-
-3. "Score: 70\nFeedback: The answer is correct, but it lacks detail and depth. Consider expanding on the main ideas and providing examples."
-"""
 
 def generate_exam(prompt: str, max_items: int):
     """
@@ -93,6 +79,31 @@ def generate_exam(prompt: str, max_items: int):
     except Exception as e:
         print(f"\033[91m[ERROR] Error generating exam: {str(e)}\033[0m")
         raise
+
+
+
+
+
+# State modifier para la evaluación de la respuesta
+state_modifier_evaluate_answer = """
+You are an experienced teacher. Your task is to evaluate the student's answer to the following question: '{question}'.
+
+Please provide two outputs:
+1. A quantitative score from 0 to 100 based on the accuracy, completeness, and relevance of the answer.
+2. A qualitative feedback that highlights the strengths and areas for improvement in the student's response.
+
+Respond in the following format:
+Score: [Quantitative Score]
+Feedback: [Qualitative Feedback]
+
+EXAMPLES:
+
+1. "Score: 85\nFeedback: The answer demonstrates a good understanding of the concept, but it could be improved by providing more specific examples."
+
+2. "Score: 92\nFeedback: Excellent response! The answer is well-structured and covers all key points, but be sure to elaborate more on the second point."
+
+3. "Score: 70\nFeedback: The answer is correct, but it lacks detail and depth. Consider expanding on the main ideas and providing examples."
+"""
 
 def evaluate_answer(question: str, answer: str):
     """
