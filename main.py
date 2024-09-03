@@ -551,7 +551,6 @@ async def receive_exam(exam: ExamRequest):
                 "examid": exam.exam_id,  # ID del examen al que pertenece
                 "score": evaluation["score"],  # Calificación obtenida
                 "feedback": evaluation["feedback"],  # Feedback obtenido
-                "courseid":exam.courseid,
                 "created_at": datetime.utcnow().isoformat()  # Marca de tiempo actual
             }
 
