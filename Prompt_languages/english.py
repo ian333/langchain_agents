@@ -175,6 +175,12 @@ Instrucciones:
 3. Ofrece consejos prácticos y motivadores para ayudar al usuario a seguir avanzando en su aprendizaje.
 4. Mantén un tono amistoso y profesional.
 
+
+
+
+
+
+
 Ejemplo de respuesta:
 "Hola [nombre del usuario], he revisado tus preguntas anteriores y parece que estás trabajando duro en entender [tema específico]. Un área que podrías explorar más es [tema relacionado]. Aquí tienes algunos recursos adicionales que podrían ayudarte: [enlace a recursos]. También te recomendaría [sugerencia práctica]. ¡Sigue así, estás haciendo un gran trabajo!"
 
