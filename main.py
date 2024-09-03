@@ -516,7 +516,7 @@ from uuid import uuid4
 from datetime import datetime
 
 # Endpoint para recibir y evaluar un examen completo
-@app.post("/exam/new")
+@app.post("/exam/evaluate")
 async def receive_exam(exam: ExamRequest):
     try:
         evaluations = []
