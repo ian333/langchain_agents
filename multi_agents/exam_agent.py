@@ -16,8 +16,12 @@ class ExamGenerateRequest(BaseModel):
     prompt: str = Field(..., example="haz un examen complejo de física de cohetes avanzada")
     max_items: int = Field(..., example=5)
     memberid: str = Field(..., example="8b013804-faa6-426e-bfcc-43227f58e3c8")
+    type: str = Field(default="diagnostic", example="diagnostic")
 # Modelos Pydantic
+from pydantic import BaseModel, Field
+
 class Answer(BaseModel):
+    question_id: str = Field(..., example="00db7caf-45b0-4085-8c92-ad102cb7eca1")
     question: str = Field(..., example="What is the difference between a cash game and a tournament in online poker?")
     answer: str = Field(..., example="In online poker, a cash game is a type of poker game where players buy chips and each chip has a real-money value. Players can join or leave the game at any time, and they can cash out their chips whenever they want. On the other hand, a tournament has a fixed buy-in amount, and players compete to win a portion of the prize pool.")
 
@@ -27,16 +31,16 @@ class ExamRequest(BaseModel):
     exam_id: str = Field(..., example="3483c05c-0c1c-4f28-8238-f5d2ca61606c")
     answers: list[Answer] = Field(..., example=[
         {
+            "question_id": "00db7caf-45b0-4085-8c92-ad102cb7eca1",
             "question": "What is the difference between a cash game and a tournament in online poker?",
             "answer": "In online poker, a cash game is a type of poker game where players buy chips and each chip has a real-money value. Players can join or leave the game at any time, and they can cash out their chips whenever they want. On the other hand, a tournament has a fixed buy-in amount, and players compete to win a portion of the prize pool."
         },
         {
+            "question_id": "00db7caf-45b0-4085-8c92-ad102cb7eca1",
             "question": "Explain the concept of rake in online poker.",
             "answer": "Rake is the fee that a poker room charges for hosting a poker game. In a cash game, the rake is typically a small percentage of the pot taken by the house each time a hand is played. In tournaments, the rake is usually a fixed percentage of the buy-in, and it is taken out before the prize pool is determined. The rake is how poker rooms make money and cover the costs of running the games."
         }
     ])
-
-
 
 
 

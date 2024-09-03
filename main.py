@@ -507,24 +507,13 @@ async def generate_exam_endpoint(exam_request: ExamGenerateRequest):
             print(question_response)
 
         print(f"\033[92m[INFO] Examen y preguntas generados y guardados en la base de datos.\033[0m")
-        return {"questions": questions}
+        return {"examid": exam_id}
 
     except Exception as e:
         print(f"\033[91m[ERROR] Error generating exam: {str(e)}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-
 from uuid import uuid4
 from datetime import datetime
-
-# Endpoint para recibir y evaluar un examen completo
-
-# Función para obtener el ID de la pregunta desde `exam_questions_tb`
-def get_question_id(exam_id: str, question_text: str):
-    response = supabase_user.table("exams_questions_tb").select("id").eq("examid", exam_id).eq("question", question_text).execute()
-    if response.data:
-        return response.data[0]["id"]
-    else:
-        raise Exception(f"Question not found for exam_id: {exam_id} and question: {question_text}")
 
 # Endpoint para recibir y evaluar un examen completo
 @app.post("/exam/new")
@@ -537,13 +526,10 @@ async def receive_exam(exam: ExamRequest):
             evaluation = evaluate_answer(answer.question, answer.answer)
             evaluations.append(evaluation)
 
-            # Obtener el `questionid` desde la tabla `exam_questions_tb`
-            question_id = get_question_id(exam.exam_id, answer.question)
-
             # Preparar los datos para insertar en la tabla `exams_answers_tb`
             answer_data = {
                 "id": str(uuid4()),  # Generar un UUID único para la respuesta
-                "questionid": question_id,  # ID de la pregunta obtenida de `exam_questions_tb`
+                "questionid": answer.question_id,  # Usar el `question_id` proporcionado en el modelo
                 "examid": exam.exam_id,  # ID del examen al que pertenece
                 "score": evaluation["score"],  # Calificación obtenida
                 "feedback": evaluation["feedback"],  # Feedback obtenido
