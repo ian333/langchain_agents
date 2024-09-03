@@ -17,6 +17,8 @@ class ExamGenerateRequest(BaseModel):
     max_items: int = Field(..., example=5)
     memberid: str = Field(..., example="8b013804-faa6-426e-bfcc-43227f58e3c8")
     type: str = Field(default="diagnostic", example="diagnostic")
+    courseid: str = Field(..., example="661659eb-3afa-4c8e-8c4e-25a9115eed69")
+
 # Modelos Pydantic
 from pydantic import BaseModel, Field
 

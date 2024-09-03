@@ -499,7 +499,7 @@ async def generate_exam_endpoint(exam_request: ExamGenerateRequest):
                 "question": question,  # La pregunta generada
                 "order": idx,  # El orden de la pregunta en el examen
                 "examid": exam_id,  # El ID del examen generado anteriormente
-                "created_at": datetime.utcnow().isoformat(),  # Marca de tiempo actual
+                "courseid":exam_request.courseid,
             }
 
             # Insertar cada pregunta en la tabla `exam_questions_tb`
