@@ -486,7 +486,10 @@ async def generate_exam_endpoint(exam_request: ExamGenerateRequest):
             "time_elapsed": None,  # Inicialmente, no hay tiempo transcurrido
             "feedback": None,  # Sin feedback inicialmente
             "score": None,  # Sin score inicialmente
-            "courseid":exam_request.course        }
+            "courseid":exam_request.courseid,
+
+            
+        }
 
         # Insertar los datos en la tabla `exams_tb`
         response = supabase_user.table("exams_tb").insert(exam_data).execute()
@@ -499,7 +502,6 @@ async def generate_exam_endpoint(exam_request: ExamGenerateRequest):
                 "question": question,  # La pregunta generada
                 "order": idx,  # El orden de la pregunta en el examen
                 "examid": exam_id,  # El ID del examen generado anteriormente
-                "courseid":exam_request.courseid,
             }
 
             # Insertar cada pregunta en la tabla `exam_questions_tb`
