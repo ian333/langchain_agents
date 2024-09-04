@@ -59,22 +59,30 @@ EXAMPLES:
 3. "Describe the process of creating a virtual environment in Python. Why is it important?"
 4. "How does exception handling work in Python? Provide an example using try, except, and finally."
 5. "What are Python decorators, and how are they used? Provide an example of a simple decorator."
+6. "Explain the differences between supervised and unsupervised learning in machine learning. Provide examples of algorithms used for each."
+7. "Discuss the key differences between a stack and a queue in data structures. Provide examples of their use cases."
+8. "What is a database transaction, and why is it important in ensuring data integrity? Provide an example using SQL."
+9. "Explain the concept of Big O notation and how it is used to evaluate the performance of algorithms."
+10. "What is recursion in computer science? Provide an example of how recursion can be used to solve a problem, such as calculating the factorial of a number."
 """
-
 
 def generate_exam(prompt: str, max_items: int):
     """
     Generate an exam based on a given prompt.
     """
     try:
+        # Crear el agente con el state_modifier adecuado
         agent = create_react_agent(
             model=llm, 
             tools=[], 
             state_modifier=state_modifier_exam_generation
         )
 
-        exam_prompt = f"Generate an exam based on the following topic: '{prompt}'"
+        # Generar el examen usando el prompt y el número máximo de preguntas
+        exam_prompt = f"Generate an exam based on the following topic: '{prompt}', with a maximum of {max_items} questions."
         messages = agent.invoke({"messages": [("human", exam_prompt)]})
+
+        # Extraer las preguntas de la respuesta
         questions = [question.strip() for question in messages["messages"][-1].content.split("\n") if question.strip()]
         
         # Limitar el número de preguntas generadas al valor máximo especificado
