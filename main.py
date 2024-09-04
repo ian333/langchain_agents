@@ -485,8 +485,8 @@ async def generate_exam_endpoint(exam_request: ExamGenerateRequest):
             "finished_at": None,  # Inicialmente, no ha sido terminado
             "time_elapsed": None,  # Inicialmente, no hay tiempo transcurrido
             "feedback": None,  # Sin feedback inicialmente
-            "score": None  # Sin score inicialmente
-        }
+            "score": None,  # Sin score inicialmente
+            "courseid":exam_request.course        }
 
         # Insertar los datos en la tabla `exams_tb`
         response = supabase_user.table("exams_tb").insert(exam_data).execute()
@@ -515,12 +515,29 @@ async def generate_exam_endpoint(exam_request: ExamGenerateRequest):
 from uuid import uuid4
 from datetime import datetime
 
+from datetime import datetime, timezone
+from uuid import uuid4
+
 # Endpoint para recibir y evaluar un examen completo
 @app.post("/exam/evaluate")
 async def receive_exam(exam: ExamRequest):
     try:
         evaluations = []
         
+        # Obtener los detalles del examen de la tabla `exams_tb`
+        exam_details = supabase_user.table("exams_tb").select("*").eq("id", exam.exam_id).single().execute()
+
+        if not exam_details.data:
+            raise HTTPException(status_code=404, detail="Examen no encontrado")
+        
+        # Obtener el timestamp de cuando se creó el examen
+        created_at_str = exam_details.data["created_at"]
+        created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+
+        # Calcular el tiempo actual y el tiempo transcurrido
+        finished_at = datetime.now(timezone.utc)
+        time_elapsed = finished_at - created_at
+
         for idx, answer in enumerate(exam.answers, start=1):
             # Evaluar cada respuesta
             evaluation = evaluate_answer(answer.question, answer.answer)
@@ -529,6 +546,7 @@ async def receive_exam(exam: ExamRequest):
             # Preparar los datos para insertar en la tabla `exams_answers_tb`
             answer_data = {
                 "id": str(uuid4()),  # Generar un UUID único para la respuesta
+                "answer": answer.answer,
                 "questionid": answer.question_id,  # Usar el `question_id` proporcionado en el modelo
                 "examid": exam.exam_id,  # ID del examen al que pertenece
                 "score": evaluation["score"],  # Calificación obtenida
@@ -538,123 +556,24 @@ async def receive_exam(exam: ExamRequest):
 
             # Insertar los datos en la tabla `exams_answers_tb`
             response = supabase_user.table("exams_answers_tb").insert(answer_data).execute()
-            print(response.data[0]["id"])
+            print(f"\033[94m[INFO] Respuesta insertada con ID: {response.data[0]['id']}\033[0m")
 
-        print(f"\033[92m[INFO] Examen recibido y evaluado. Preguntas y respuestas guardadas en la base de datos.\033[0m")
+            # Actualizar el estado a "completed"
+            update = supabase_user.table("exams_tb").update({"status": "completed"}).eq("id", response.data[0]["id"]).execute()
+
+        # Actualizar la tabla `exams_tb` con `finished_at`, `time_elapsed`, y `status` a `done`
+        exam_update_data = {
+            "status": "done",
+            "finished_at": finished_at.isoformat(),
+            "time_elapsed": str(time_elapsed)  # Guardar el tiempo transcurrido en formato 'HH:MM:SS'
+        }
+
+        # Actualizar el examen en la tabla `exams_tb`
+        supabase_user.table("exams_tb").update(exam_update_data).eq("id", exam.exam_id).execute()
+
+        print(f"\033[92m[INFO] Examen actualizado con `finished_at`, `time_elapsed`, y `status` a 'done'.\033[0m")
         return {"status": "success", "evaluations": evaluations}
 
     except Exception as e:
         print(f"\033[91m[ERROR] Error evaluating exam: {str(e)}\033[0m")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
-@app.post("/exam/test")
-async def test_exam_endpoint():
-    """
-    Función de prueba para generar un examen, contestarlo y evaluar las respuestas dinámicamente.
-    """
-    try:
-        # Generar un examen de prueba
-        prompt = "Basic concepts of online poker"
-        max_items = 3
-        questions = generate_exam(prompt, max_items)
-
-        print(f"\033[92m[INFO] Preguntas generadas: {questions}\033[0m")
-
-        # Simular respuestas a las preguntas generadas
-        answers = []
-        for question in questions:
-            # Responder cada pregunta de manera simple (esto se puede personalizar)
-            answer = f"This is a sample answer for the question: {question}"
-            answers.append({"question": question, "answer": answer})
-
-        # Crear un objeto ExamRequest simulado
-        exam_request = ExamRequest(
-            courseid="661659eb-3afa-4c8e-8c4e-25a9115eed69",
-            memberid="8b013804-faa6-426e-bfcc-43227f58e3c8",
-            answers=answers
-        )
-
-        # Evaluar el examen
-        evaluations = []
-        for answer in exam_request.answers:
-            evaluation = evaluate_answer(answer["question"], answer["answer"])
-            evaluations.append(evaluation)
-
-        print(f"\033[92m[INFO] Evaluaciones completadas: {evaluations}\033[0m")
-        return {"status": "success", "evaluations": evaluations}
-
-    except Exception as e:
-        print(f"\033[91m[ERROR] Error during test_exam_endpoint: {str(e)}\033[0m")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from fastapi import HTTPException
-import requests
-
-# Supongamos que `generate_answer` es la función que usa la segunda IA para generar respuestas
-def generate_answer(question: str) -> str:
-    # Aquí podrías integrar otra IA para generar respuestas basadas en la pregunta
-    # Por simplicidad, generamos una respuesta dummy
-    return f"This is an AI-generated answer for the question: {question}"
-
-@app.post("/exam/test_full_cycle")
-async def test_full_cycle_endpoint():
-    """
-    Función de prueba para realizar el ciclo completo de generación, contestación y evaluación del examen.
-    """
-    try:
-        # Paso 1: Generar el examen
-        generate_exam_url = "http://localhost:8000/exam/generate"
-        generate_data = {
-            "prompt": "Basic concepts of online poker",
-            "max_items": 3,
-            "memberid": "8b013804-faa6-426e-bfcc-43227f58e3c8"
-        }
-        generate_response = requests.post(generate_exam_url, json=generate_data)
-        generate_response.raise_for_status()
-
-        # Obtener las preguntas generadas y el ID del examen
-        exam_data = generate_response.json()
-        questions = exam_data["questions"]
-        print(f"\033[92m[INFO] Preguntas generadas: {questions}\033[0m")
-
-        # Paso 2: Generar respuestas usando otra IA
-        answers = []
-        for question in questions:
-            ai_answer = generate_answer(question)  # Usando otra IA para responder
-            answers.append({"question": question, "answer": ai_answer})
-
-        # Paso 3: Enviar las respuestas para su evaluación
-        exam_id = generate_data.get("exam_id", str(uuid4()))  # Usa el exam_id generado si está disponible
-        new_exam_url = "http://localhost:8000/exam/new"
-        exam_request_data = {
-            "courseid": "661659eb-3afa-4c8e-8c4e-25a9115eed69",
-            "memberid": "8b013804-faa6-426e-bfcc-43227f58e3c8",
-            "exam_id": exam_id,
-            "answers": answers
-        }
-        new_exam_response = requests.post(new_exam_url, json=exam_request_data)
-        new_exam_response.raise_for_status()
-
-        # Obtener las evaluaciones
-        evaluations = new_exam_response.json()["evaluations"]
-        print(f"\033[92m[INFO] Evaluaciones completadas: {evaluations}\033[0m")
-        
-        return {"status": "success", "evaluations": evaluations}
-
-    except Exception as e:
-        print(f"\033[91m[ERROR] Error during full cycle test: {str(e)}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
