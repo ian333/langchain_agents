@@ -15,6 +15,7 @@ from Prompt_languages import english, spanish
 language = "english"  # Cambiar a "spanish" para español
 
 # Importar las configuraciones según el idioma seleccionado
+path_prompt_template=""
 if language == "english":
     path_prompt_template = english.path_prompt_template
     state_modifier_path_details = english.state_modifier_path_details
@@ -53,8 +54,10 @@ async def generate_path_details(topic: str,pathid:str):
             state_modifier=state_modifier_path_details
         )
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
+        formatted_prompt = path_prompt_template.format(topic=topic)
         
-        messages = app.invoke({"messages": [("human", path_prompt_template.format(topic=topic))]})
+        messages = app.invoke({"messages": [("human", formatted_prompt)]})
+        
         content = messages["messages"][-1].content.split("\n\n", 1)
         name = content[0].strip()
         description = content[1].strip()
@@ -81,7 +84,7 @@ async def generate_path_topics(path_name: str, max_items: int = 5, language: str
         )
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
         
-        topic_prompt = f"Por favor, genera una lista de títulos de temas para un Path de aprendizaje llamado '{path_name}', con un enfoque en proporcionar un flujo educativo lógico y claro., POR FAVOR RESPONDE SOLO CON LOS TITULOS O CON LOS TOPICS, solo la lista de los topics"
+        topic_prompt = f"Por favor, genera una lista de títulos de temas para un Path de aprendizaje llamado '{path_name}', con un enfoque en proporcionar un flujo educativo lógico y claro., POR FAVOR RESPONDE SOLO CON LOS TITULOS O CON LOS TOPICS, solo la lista de los topics{max_items}"
         messages = app.invoke({"messages": [("human", topic_prompt)]})
         topics = [topic.strip() for topic in messages["messages"][-1].content.split("\n") if topic.strip()]
         print(f"\033[92m[INFO] Temas generados con éxito: {topics}\033[0m")
@@ -105,17 +108,18 @@ async def generate_subtopics_for_topic(topic_name: str, path_name: str, language
 
     try:
         # Configurar el agente dependiendo del idioma
-        state_modifier = state_modifier_subtopics
 
         app = create_react_agent(
             model=llm, 
             tools=[], 
-            state_modifier=state_modifier
+            state_modifier=state_modifier_subtopics
         )
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
 
         # Generar los subtopics
-        subtopic_prompt = subtopic_prompt_template
+        subtopic_prompt = subtopic_prompt_template.format(topic_name=topic_name, path_name=path_name)
+
+
         messages = app.invoke({"messages": [("human", subtopic_prompt)]})
         
         # Filtrar los subtemas para eliminar encabezados y otros elementos no deseados
@@ -217,7 +221,8 @@ async def generate_prompts_for_subtopics(subtopic_name: str, topic_name: str, pa
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
 
         # Generar los prompts
-        prompt_template = prompts_for_subtopics_template
+        prompt_template = prompts_for_subtopics_template.format(subtopic_name=subtopic_name, topic_name=topic_name, path_name=path_name)
+
         messages = app.invoke({"messages": [("human", prompt_template)]})
         prompts = [prompt.strip() for prompt in messages["messages"][-1].content.split("\n") if prompt.strip()]
         print(f"\033[92m[INFO] Prompts generados con éxito: {prompts}\033[0m")

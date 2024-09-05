@@ -389,11 +389,14 @@ async def new_path(
 
 # Función que procesa las tareas restantes en segundo plano
 async def process_remaining_tasks(topics, pathid, name, courseid, projectid, memberid, orgid):
+    print(f"\033[94m[INFO] Procesando las tareas en segundo plano para los topics: {topics}\033[0m")
     try:
-        # Crear tareas para paralelizar la creación de artículos y subtopics
         tasks = []
+        
         for order, topic in enumerate(topics, start=1):
             topicid = str(uuid.uuid4())  # Generar un nuevo ID para el topic
+
+            # Guardar el topic en Supabase
             await save_to_supabase("paths_topics_tb", {
                 "id": topicid,
                 "pathid": pathid,
@@ -401,8 +404,8 @@ async def process_remaining_tasks(topics, pathid, name, courseid, projectid, mem
                 "order": order,
                 "created_at": datetime.now(timezone.utc).isoformat(),
             })
-            
-            # Crear tareas para la generación de artículos y subtopics
+
+            # Crear una tarea para cada topic
             task = asyncio.create_task(create_article_and_subtopics_for_topic(
                 topic_name=topic,
                 pathid=pathid,
@@ -421,27 +424,45 @@ async def process_remaining_tasks(topics, pathid, name, courseid, projectid, mem
     except Exception as e:
         print(f"\033[91m[ERROR] Error procesando las tareas en segundo plano: {str(e)}\033[0m")
 
-
 # Función para manejar la creación de artículos y subtopics en paralelo
 async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, topicid: str, courseid: str, projectid: str, memberid: str, orgid: str, path_name: str):
     try:
-        # Crear la tarea para crear el artículo, sin await aquí
-        article_task = create_article_for_topic(topic_name=topic_name, pathid=pathid, courseid=courseid, projectid=projectid, memberid=memberid, orgid=orgid)
+        print(f"\033[94m[INFO] Iniciando creación de artículo y subtopics para el tema: {topic_name}\033[0m")
 
-        subtopics_task = asyncio.create_task(generate_subtopics_for_topic(topic_name, path_name))
-        subtopics = (await asyncio.gather(subtopics_task))  # Desempaquetar la lista
+        # Crear tareas para generar el artículo y subtopics
+        article_task = asyncio.create_task(create_article_for_topic(
+            topic_name=topic_name, 
+            pathid=pathid, 
+            courseid=courseid, 
+            projectid=projectid, 
+            memberid=memberid, 
+            orgid=orgid
+        ))
+        
+        # Generar subtopics en paralelo
+        subtopics_task = asyncio.create_task(generate_subtopics_for_topic(
+            topic_name=topic_name, 
+            path_name=path_name
+        ))
 
-        # Crear tareas para guardar subtopics en paralelo
-        subtopic_tasks = [save_subtopics_to_db(pathid, topicid, subtopic, path_name=path_name, topic_name=topic_name) for subtopic in subtopics]
+        # Esperar a que ambas tareas se completen
+        article_result, subtopics = await asyncio.gather(article_task, subtopics_task)
+        
+        print(f"\033[92m[INFO] Artículo generado: {article_result}\033[0m")
+        print(f"\033[92m[INFO] Subtemas generados: {subtopics}\033[0m")
+        
+        # Crear tareas para guardar los subtopics
+        subtopic_tasks = [
+            asyncio.create_task(save_subtopics_to_db(pathid, topicid, subtopic, path_name=path_name, topic_name=topic_name))
+            for subtopic in subtopics
+        ]
 
-        # Ejecutar la creación del artículo y los subtopics en paralelo
-        await asyncio.gather(article_task, *subtopic_tasks)
+        # Ejecutar la creación de subtopics en paralelo
+        await asyncio.gather(*subtopic_tasks)
 
     except Exception as e:
         print(f"\033[91m[ERROR] Error en create_article_and_subtopics_for_topic: {str(e)}\033[0m")
         raise
-
-
 
 
 
@@ -519,7 +540,6 @@ from datetime import datetime, timezone,timedelta
 from uuid import uuid4
 
 
-# Endpoint para recibir y evaluar un examen completo
 @app.post("/exam/evaluate")
 async def receive_exam(exam: ExamRequest, background_tasks: BackgroundTasks):
     try:
@@ -540,15 +560,10 @@ async def receive_exam(exam: ExamRequest, background_tasks: BackgroundTasks):
         time_elapsed = finished_at - created_at
         # Dividir el tiempo transcurrido en días, horas, minutos y segundos
         total_seconds = int(time_elapsed.total_seconds())
-        days, remainder = divmod(total_seconds, 86400)  # 86400 segundos en un día
+        days, remainder = divmod(total_seconds, 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
-
-        # Almacenar tiempo transcurrido como texto en formato "Días HH:MM:SS"
-        if days > 0:
-            time_elapsed_str = f"{hours:02}:{minutes:02}:{seconds:02}"
-        else:
-            time_elapsed_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+        time_elapsed_str = f"{hours:02}:{minutes:02}:{seconds:02}" 
 
         print(f"\033[92m[INFO] Tiempo transcurrido (time_elapsed_str): {time_elapsed_str}\033[0m")
 
@@ -557,14 +572,23 @@ async def receive_exam(exam: ExamRequest, background_tasks: BackgroundTasks):
         feedbacks_combined = []
         total_score = 0
 
-        for idx, answer in enumerate(exam.answers, start=1):
-            # Evaluar cada respuesta
+        # Evaluar las respuestas de manera concurrente
+        async def process_answer(answer):
             evaluation = evaluate_answer(answer.question, answer.answer)
-            evaluations.append(evaluation)
             feedbacks_combined.append(evaluation["feedback"])
-            total_score += int(evaluation["score"])
+            score = int(evaluation["score"])
+            return evaluation, score
 
-            # Preparar los datos para insertar en la tabla `exams_answers_tb`
+        tasks = [process_answer(answer) for answer in exam.answers]
+        results = await asyncio.gather(*tasks)
+
+        # Procesar los resultados obtenidos
+        for evaluation, score in results:
+            evaluations.append(evaluation)
+            total_score += score
+
+        # Insertar respuestas y actualizar el estado a "completed" en paralelo
+        async def insert_answer(answer, evaluation):
             answer_data = {
                 "id": str(uuid4()),  # Generar un UUID único para la respuesta
                 "answer": answer.answer,
@@ -574,14 +598,16 @@ async def receive_exam(exam: ExamRequest, background_tasks: BackgroundTasks):
                 "feedback": evaluation["feedback"],  # Feedback obtenido
                 "created_at": datetime.utcnow().isoformat()  # Marca de tiempo actual
             }
-
-            # Insertar los datos en la tabla `exams_answers_tb`
             response = supabase_user.table("exams_answers_tb").insert(answer_data).execute()
             print(f"\033[94m[INFO] Respuesta insertada con ID: {response.data[0]['id']}\033[0m")
 
-            # Actualizar el estado a "completed"
-            update = supabase_user.table("exams_tb").update({"status": "completed"}).eq("id", response.data[0]["id"]).execute()
-        
+        # Tareas para insertar las respuestas
+        insert_tasks = [insert_answer(answer, evaluation) for answer, (evaluation, _) in zip(exam.answers, results)]
+        await asyncio.gather(*insert_tasks)
+
+        # Actualizar el estado del examen
+        update = supabase_user.table("exams_tb").update({"status": "completed"}).eq("id", exam.exam_id).execute()
+
         # Calcular el promedio del score
         average_score = total_score / len(exam.answers)
         print(f"\033[92m[INFO] Promedio del score: {average_score}\033[0m")
@@ -590,7 +616,6 @@ async def receive_exam(exam: ExamRequest, background_tasks: BackgroundTasks):
         combined_feedback_str = "\n".join(feedbacks_combined)
         overall_feedback = generate_feedback(combined_feedback_str)
         print(f"\033[92m[INFO] Feedback general generado: {overall_feedback}\033[0m")
-
 
         # Actualizar la tabla `exams_tb` con `finished_at`, `time_elapsed`, y `status` a `done`
         exam_update_data = {
