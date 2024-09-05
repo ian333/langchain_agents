@@ -300,6 +300,10 @@ topic_prompt_template = """
 Please generate a list of topic titles for a learning Path called '{path_name}'. The focus should be on providing a logical and clear educational flow.
 
 Important: Respond only with the titles or the topics, one per line, without any additional text or formatting. The output will be treated as a list of topics.
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
 
 EXAMPLES:
 
@@ -313,9 +317,10 @@ EXAMPLES:
 # Prompt template for generating subtopics
 subtopic_prompt_template = """
 Please generate a list of subtopics for the topic '{topic_name}' within the Path '{path_name}'.
+JUST 5e PLEAS JUST 5
 
 Important: Respond only with the subtopics, one per line, without headers or additional formatting. The output will be used as a list of subtopics, so each line should represent a single subtopic.
-
+JUST 5 PLEASE JUST generate 5
 EXAMPLES:
 
 1. "Understanding Flexbox in CSS"

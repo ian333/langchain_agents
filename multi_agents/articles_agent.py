@@ -85,7 +85,7 @@ async def make_article(topic: str):
     try:
         # Generar el artículo
         print(f"\033[94m[INFO] Enviando solicitud para generar el artículo...\033[0m")
-        messages = app.invoke({"messages": [("human", article_prompt_template.format(topic=topic))]})
+        messages =   app.invoke({"messages": [("human", article_prompt_template.format(topic=topic))]})
         print(f"\033[92m[INFO] Artículo generado con éxito.\033[0m")
         print(messages)
         return messages["messages"][-1].content

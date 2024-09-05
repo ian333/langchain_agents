@@ -337,44 +337,53 @@ async def create_article(
         print(f"\033[91m[ERROR] Error creating article: {str(e)}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+from pydantic import BaseModel, Field
+
+
+
+# Definir un modelo para los datos del cuerpo de la solicitud
+class NewPathRequest(BaseModel):
+    prompt: str = Field(..., example="Aprender Python desde cero")
+    courseid: str = Field(..., example="661659eb-3afa-4c8e-8c4e-25a9115eed69")
+    memberid: str = Field(..., example="8b013804-faa6-426e-bfcc-43227f58e3c8")
+    projectid: str = Field(..., example="28722c50-cc1b-4b92-811b-0709320063e5")
+    orgid: str = Field(..., example="6c0bfedb-258a-4c77-9bad-b0e87c0d9c98")
+    isDefault: bool = Field(True, example=True)
 
 @app.post("/path/new")
 async def new_path(
     background_tasks: BackgroundTasks,
-    prompt: str = Form(..., example="Aprender Python desde cero"),
-    courseid: str = Form(..., example="661659eb-3afa-4c8e-8c4e-25a9115eed69"),
-    memberid: str = Form(..., example="8b013804-faa6-426e-bfcc-43227f58e3c8"),
-    projectid: str = Form(..., example="28722c50-cc1b-4b92-811b-0709320063e5"),
-    orgid: str = Form(..., example="6c0bfedb-258a-4c77-9bad-b0e87c0d9c98"),
-    isDefault: bool = Form(..., example=True)
+    new_path_data: NewPathRequest
 ):
-    
     start_time = time.time()  # Capturar el tiempo de inicio
     pathid = str(uuid4())
     try:
-        print(f"\033[94m[INFO] Recibiendo datos del formulario...\033[0m")
-        name, description = await generate_path_details(prompt, pathid)
+        print(f"\033[94m[INFO] Recibiendo datos del cuerpo...\033[0m")
+        name, description = await generate_path_details(new_path_data.prompt, pathid)
         
         # Guardar pathid en Supabase
         await save_to_supabase("paths_tb", {
             "id": pathid,
-            "base_prompt": prompt,
+            "base_prompt": new_path_data.prompt,
             "name": name,
-            "courseid": courseid,
+            "courseid": new_path_data.courseid,
             "description": description,
-            "memberid": memberid,
+            "memberid": new_path_data.memberid,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "isDefault": isDefault,
+            "isDefault": new_path_data.isDefault,
             "icon": "😍",
             "level": 1,
-            "orgid": orgid,
+            "orgid": new_path_data.orgid,
         })
 
         # Generar topics
         topics = await generate_path_topics(path_name=name, max_items=5, language="en")
         
         # Iniciar las tareas en segundo plano
-        background_tasks.add_task(process_remaining_tasks, topics, pathid, name, courseid, projectid, memberid, orgid)
+        background_tasks.add_task(
+            process_remaining_tasks, topics, pathid, name, new_path_data.courseid, 
+            new_path_data.projectid, new_path_data.memberid, new_path_data.orgid
+        )
         
         duration = time.time() - start_time  # Calcular la duración
         print(f"\033[92m[INFO] Path creado exitosamente en {duration:.2f} segundos.\033[0m")
@@ -385,7 +394,6 @@ async def new_path(
     except Exception as e:
         print(f"\033[91m[ERROR] Error creando el Path: {str(e)}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-
 
 # Función que procesa las tareas restantes en segundo plano
 async def process_remaining_tasks(topics, pathid, name, courseid, projectid, memberid, orgid):
@@ -419,7 +427,7 @@ async def process_remaining_tasks(topics, pathid, name, courseid, projectid, mem
             tasks.append(task)
 
         # Ejecutar todas las tareas en paralelo
-        await asyncio.gather(*tasks)
+        asyncio.gather(*tasks)
 
     except Exception as e:
         print(f"\033[91m[ERROR] Error procesando las tareas en segundo plano: {str(e)}\033[0m")
@@ -429,7 +437,7 @@ async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, t
     try:
         print(f"\033[94m[INFO] Iniciando creación de artículo y subtopics para el tema: {topic_name}\033[0m")
 
-        # Crear tareas para generar el artículo y subtopics
+        # Crear tareas para generar el artículo y subtopics en paralelo
         article_task = asyncio.create_task(create_article_for_topic(
             topic_name=topic_name, 
             pathid=pathid, 
@@ -439,16 +447,16 @@ async def create_article_and_subtopics_for_topic(topic_name: str, pathid: str, t
             orgid=orgid
         ))
         
-        # Generar subtopics en paralelo
         subtopics_task = asyncio.create_task(generate_subtopics_for_topic(
             topic_name=topic_name, 
             path_name=path_name
         ))
+        asyncio.gather(article_task)
+        # Esperar a que ambas tareas se completen sin bloquearse mutuamente
+        subtopics = await asyncio.gather(subtopics_task)
 
-        # Esperar a que ambas tareas se completen
-        article_result, subtopics = await asyncio.gather(article_task, subtopics_task)
-        
-        print(f"\033[92m[INFO] Artículo generado: {article_result}\033[0m")
+        # No esperas a que termine la tarea de artículo si no te interesa el resultado inmediatamente.
+        print(f"\033[92m[INFO] Artículo generado (no se espera su resultado en tiempo real)\033[0m")
         print(f"\033[92m[INFO] Subtemas generados: {subtopics}\033[0m")
         
         # Crear tareas para guardar los subtopics
@@ -632,14 +640,19 @@ async def receive_exam(exam: ExamRequest, background_tasks: BackgroundTasks):
         print(f"\033[92m[INFO] Examen actualizado con `finished_at`, `time_elapsed`, y `status` a 'done'.\033[0m")
 
         # Generar un nuevo "path" con el feedback como prompt
-        background_tasks.add_task(new_path, 
-                                  background_tasks=background_tasks,
-                                  prompt=overall_feedback,  # Usar el feedback generado como prompt
-                                  courseid=exam.courseid,
-                                  memberid=exam.memberid,
-                                  projectid=exam.projectid,
-                                  orgid=exam.orgid,
-                                  isDefault=True)
+# Adaptar la llamada a background_tasks para usar el nuevo modelo
+        background_tasks.add_task(
+            new_path,
+            background_tasks=background_tasks,
+            new_path_data=NewPathRequest(
+                prompt=overall_feedback,  # Usar el feedback generado como prompt
+                courseid=exam.courseid,
+                memberid=exam.memberid,
+                projectid=exam.projectid,
+                orgid=exam.orgid,
+                isDefault=False
+            )
+)
 
         return {"status": "success", "evaluations": evaluations}
 

@@ -216,6 +216,11 @@ state_modifier_path_topics = """
 You are a helpful assistant. Your task is to generate a clear and organized list of topics for a learning Path called '{path_name}'. 
 
 Important: Respond only with the titles of the topics, one per line. The output will be used as a simple list of topics, so ensure each topic title is concise and informative. Limit the output to {max_items} topics.
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
 
 EXAMPLES:
 
@@ -231,6 +236,10 @@ state_modifier_subtopics = """
 You are a helpful assistant. Your task is to generate a clear and organized list of subtopics for a specific topic called '{topic_name}' within the learning Path '{path_name}'. 
 
 Important: Respond only with the subtopics, one per line, without headers or additional formatting. The output will be used as a simple list of subtopics, so ensure each subtopic is clear and relevant. Limit the output to {max_subtopics} subtopics.
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
 
 EXAMPLES:
 
@@ -246,6 +255,12 @@ topic_prompt_template = """
 Please generate a list of topic titles for a learning Path called '{path_name}'. The focus should be on providing a logical and clear educational flow.
 
 Important: Respond only with the titles or the topics, one per line, without any additional text or formatting. The output will be treated as a list of topics.
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
+JUST 5 PLEASE JUST generate 5
 
 EXAMPLES:
 

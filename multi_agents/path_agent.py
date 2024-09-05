@@ -84,7 +84,7 @@ async def generate_path_topics(path_name: str, max_items: int = 5, language: str
         )
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
         
-        topic_prompt = f"Por favor, genera una lista de títulos de temas para un Path de aprendizaje llamado '{path_name}', con un enfoque en proporcionar un flujo educativo lógico y claro., POR FAVOR RESPONDE SOLO CON LOS TITULOS O CON LOS TOPICS, solo la lista de los topics{max_items}"
+        topic_prompt = f"Por favor, genera una lista de títulos de temas para un Path de aprendizaje llamado '{path_name}', SOLO GENERA 5 TEMAS SOLO 5con un enfoque en proporcionar un flujo educativo lógico y claro., POR FAVOR RESPONDE SOLO CON LOS TITULOS O CON LOS TOPICS, solo la lista de los topics{max_items}"
         messages = app.invoke({"messages": [("human", topic_prompt)]})
         topics = [topic.strip() for topic in messages["messages"][-1].content.split("\n") if topic.strip()]
         print(f"\033[92m[INFO] Temas generados con éxito: {topics}\033[0m")
@@ -123,7 +123,7 @@ async def generate_subtopics_for_topic(topic_name: str, path_name: str, language
         messages = app.invoke({"messages": [("human", subtopic_prompt)]})
         
         # Filtrar los subtemas para eliminar encabezados y otros elementos no deseados
-        subtopics = [subtopic.strip() for subtopic in messages["messages"][-1].content.split("\n") if subtopic.strip() and not subtopic.startswith('#')]
+        subtopics = [subtopic.strip() for subtopic in messages["messages"][-1].content.split("\n") if subtopic.strip()]
         
         print(f"\033[92m[INFO] Subtemas generados con éxito: {subtopics}\033[0m")
 
@@ -221,7 +221,7 @@ async def generate_prompts_for_subtopics(subtopic_name: str, topic_name: str, pa
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
 
         # Generar los prompts
-        prompt_template = prompts_for_subtopics_template.format(subtopic_name=subtopic_name, topic_name=topic_name, path_name=path_name)
+        prompt_template = prompts_for_subtopics_template.format(subtopic_name=subtopic_name, topic_name=topic_name, path_name=path_name,max_prompts=max_prompts)
 
         messages = app.invoke({"messages": [("human", prompt_template)]})
         prompts = [prompt.strip() for prompt in messages["messages"][-1].content.split("\n") if prompt.strip()]
@@ -274,42 +274,60 @@ async def delete_test_entries(table_name: str, pathid: str):
 
 
 import requests
+from multi_agents.articles_agent import make_article
 
 async def create_article_for_topic(topic_name: str, pathid: str, courseid: str, projectid: str, memberid: str, orgid: str):
     print(f"\033[94m[INFO] Generando artículo para el topic '{topic_name}'...\033[0m")
-    # Preparar datos para enviar a la API de creación de artículos
-    data_articles = {
-        "prompt": topic_name,  # Enviar el nombre del topic como prompt
-        "courseid": courseid,
-        "projectid": projectid,
-        "memberid": memberid,
-        "organizationid": orgid,
-    }
-
-    # Realizar la llamada a la API
-    response = requests.post(f"http://localhost:8000/articles/new", data=data_articles)
     
-    if response.status_code == 201:
-        article_id = response.json().get('id')
-        print(f"\033[92m[INFO] Artículo generado y guardado con ID: {article_id}\033[0m")
-    else:
-        print(f"\033[91m[ERROR] Error al generar el artículo: {response.status_code} - {response.text}\033[0m")
-        raise HTTPException(status_code=500, detail="Error creating article")
-    
-    # Guardar los datos del artículo en la tabla 'path_articles_tb'
-    data_save_article = {
-        "id": str(uuid.uuid4()),  # Asegúrate de crear un ID único para el registro
-        "articleid": article_id,
-        "pathid": pathid,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    print(f"\033[92m[INFO] Este es data_save_article: {data_save_article}\033[0m")
 
-    result = supabase_user.table("paths_articles_tb").insert(data_save_article).execute()
+    try:
+        # Generar el artículo directamente usando LangGraph en lugar de llamar a la API
 
-    if not result or "error" in result:
-        print(f"\033[91m[ERROR] Error al guardar el prompt en la tabla 'paths_prompts_tb': {result.get('error')}\033[0m")
-        raise HTTPException(status_code=500, detail="Error saving prompt to database")
+        print(f"\033[94m[INFO] Recibiendo datos del formulario...\033[0m")
+        print(f"\033[94mPrompt: {topic_name}\033[0m")
+        print(f"\033[94mCourse ID: {courseid}\033[0m")
+        print(f"\033[94mProject ID: {projectid}\033[0m")
+        print(f"\033[94mMember ID: {memberid}\033[0m")
+        print(f"\033[94mOrganization ID: {orgid}\033[0m")
+
+        # Generar el contenido del artículo usando el prompt proporcionado
+        content = await make_article(topic_name)
+        print(f"\033[92m[INFO] Artículo generado: {content[:200]}... (truncado para vista previa)\033[0m")
+
+        # Guardar el artículo en la base de datos utilizando Supabase
+        result = supabase_user.table("articles_tb").insert({
+            "prompt": topic_name,
+            "content": content,
+            "courseid": courseid,
+            "projectid": projectid,
+            "memberid": memberid,
+            "organizationid": orgid,
+        }).execute()
+
+        if not result or "error" in result:
+            raise HTTPException(status_code=500, detail="Error saving article to database")
+
+        # Devolver el ID del artículo creado
+        article_id = result.data[0]['id']
+
+        # Guardar los datos del artículo en la tabla 'path_articles_tb'
+        data_save_article = {
+            "id": article_id,  # ID único para el artículo
+            "articleid": article_id,
+            "pathid": pathid,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        print(f"\033[92m[INFO] Este es data_save_article: {data_save_article}\033[0m")
+
+        result = supabase_user.table("paths_articles_tb").insert(data_save_article).execute()
+
+        if not result or "error" in result:
+            print(f"\033[91m[ERROR] Error al guardar el artículo en la tabla 'paths_articles_tb': {result.get('error')}\033[0m")
+            raise HTTPException(status_code=500, detail="Error saving article to database")
+
+    except Exception as e:
+        print(f"\033[91m[ERROR] Error al generar el artículo: {str(e)}\033[0m")
+        raise
 
 
 async def delete_all_entries_except_exclusions(exclusion_ids: list):
