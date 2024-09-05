@@ -38,8 +38,8 @@ class ExamRequest(BaseModel):
     courseid: str = Field(..., example="661659eb-3afa-4c8e-8c4e-25a9115eed69")
     memberid: str = Field(..., example="8b013804-faa6-426e-bfcc-43227f58e3c8")
     exam_id: str = Field(..., example="bbd2fa7d-4a7a-4a7d-898d-0f2efcd1e123")
-    projectid: str = Field(..., example="28722c50-cc1b-4b92-811b-0709320063e5"),
-    orgid: str = Field(..., example="6c0bfedb-258a-4c77-9bad-b0e87c0d9c98"),
+    projectid: str = Field(..., example="28722c50-cc1b-4b92-811b-0709320063e5")
+    orgid: str = Field(..., example="6c0bfedb-258a-4c77-9bad-b0e87c0d9c98")
 
     answers: list[Answer] = Field(..., example=[
         {
