@@ -77,7 +77,7 @@ async def generate_path_topics(path_name: str, max_items: int = 5, language: str
         app = create_react_agent(
             model=llm, 
             tools=[], 
-            state_modifier=state_modifier
+            state_modifier=state_modifier_path_topics
         )
         print(f"\033[92m[INFO] Agente creado exitosamente.\033[0m")
         

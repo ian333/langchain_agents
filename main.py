@@ -518,9 +518,10 @@ from uuid import uuid4
 from datetime import datetime, timezone,timedelta
 from uuid import uuid4
 
+
 # Endpoint para recibir y evaluar un examen completo
 @app.post("/exam/evaluate")
-async def receive_exam(exam: ExamRequest):
+async def receive_exam(exam: ExamRequest, background_tasks: BackgroundTasks):
     try:
         evaluations = []
         
@@ -554,7 +555,7 @@ async def receive_exam(exam: ExamRequest):
 
         # Acumular el feedback y scores para el cálculo final
         feedbacks_combined = []
-        total_score=0
+        total_score = 0
 
         for idx, answer in enumerate(exam.answers, start=1):
             # Evaluar cada respuesta
@@ -562,8 +563,6 @@ async def receive_exam(exam: ExamRequest):
             evaluations.append(evaluation)
             feedbacks_combined.append(evaluation["feedback"])
             total_score += int(evaluation["score"])
-
-
 
             # Preparar los datos para insertar en la tabla `exams_answers_tb`
             answer_data = {
@@ -576,14 +575,12 @@ async def receive_exam(exam: ExamRequest):
                 "created_at": datetime.utcnow().isoformat()  # Marca de tiempo actual
             }
 
-
             # Insertar los datos en la tabla `exams_answers_tb`
             response = supabase_user.table("exams_answers_tb").insert(answer_data).execute()
             print(f"\033[94m[INFO] Respuesta insertada con ID: {response.data[0]['id']}\033[0m")
 
             # Actualizar el estado a "completed"
             update = supabase_user.table("exams_tb").update({"status": "completed"}).eq("id", response.data[0]["id"]).execute()
-        
         
         # Calcular el promedio del score
         average_score = total_score / len(exam.answers)
@@ -600,14 +597,25 @@ async def receive_exam(exam: ExamRequest):
             "status": "done",
             "finished_at": finished_at.isoformat(),
             "time_elapsed": time_elapsed_str,  # Guardar el tiempo transcurrido en formato 'HH:MM:SS'
-            "score":average_score,
-            "feedback":overall_feedback
+            "score": average_score,
+            "feedback": overall_feedback
         }
 
         # Actualizar el examen en la tabla `exams_tb`
         supabase_user.table("exams_tb").update(exam_update_data).eq("id", exam.exam_id).execute()
 
         print(f"\033[92m[INFO] Examen actualizado con `finished_at`, `time_elapsed`, y `status` a 'done'.\033[0m")
+
+        # Generar un nuevo "path" con el feedback como prompt
+        background_tasks.add_task(new_path, 
+                                  background_tasks=background_tasks,
+                                  prompt=overall_feedback,  # Usar el feedback generado como prompt
+                                  courseid=exam.courseid,
+                                  memberid=exam.memberid,
+                                  projectid=exam.projectid,
+                                  orgid=exam.orgid,
+                                  isDefault=True)
+
         return {"status": "success", "evaluations": evaluations}
 
     except Exception as e:
