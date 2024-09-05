@@ -81,8 +81,6 @@ supabase_user = SupabaseClient.get_user_client()
 from Config.config import set_language, get_language
 
 
-
-
 app = FastAPI()
 
 app.add_middleware(
@@ -341,7 +339,7 @@ async def create_article(
 
 
 @app.post("/path/new")
-async def get_path(
+async def new_path(
     background_tasks: BackgroundTasks,
     prompt: str = Form(..., example="Aprender Python desde cero"),
     courseid: str = Form(..., example="661659eb-3afa-4c8e-8c4e-25a9115eed69"),
@@ -514,10 +512,10 @@ async def generate_exam_endpoint(exam_request: ExamGenerateRequest):
     except Exception as e:
         print(f"\033[91m[ERROR] Error generating exam: {str(e)}\033[0m")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+from multi_agents.exam_agent import generate_feedback
 from uuid import uuid4
-from datetime import datetime
-
-from datetime import datetime, timezone
+from datetime import datetime, timezone,timedelta
 from uuid import uuid4
 
 # Endpoint para recibir y evaluar un examen completo
@@ -539,11 +537,33 @@ async def receive_exam(exam: ExamRequest):
         # Calcular el tiempo actual y el tiempo transcurrido
         finished_at = datetime.now(timezone.utc)
         time_elapsed = finished_at - created_at
+        # Dividir el tiempo transcurrido en días, horas, minutos y segundos
+        total_seconds = int(time_elapsed.total_seconds())
+        days, remainder = divmod(total_seconds, 86400)  # 86400 segundos en un día
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        # Almacenar tiempo transcurrido como texto en formato "Días HH:MM:SS"
+        if days > 0:
+            time_elapsed_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+        else:
+            time_elapsed_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+        print(f"\033[92m[INFO] Tiempo transcurrido (time_elapsed_str): {time_elapsed_str}\033[0m")
+
+
+        # Acumular el feedback y scores para el cálculo final
+        feedbacks_combined = []
+        total_score=0
 
         for idx, answer in enumerate(exam.answers, start=1):
             # Evaluar cada respuesta
             evaluation = evaluate_answer(answer.question, answer.answer)
             evaluations.append(evaluation)
+            feedbacks_combined.append(evaluation["feedback"])
+            total_score += int(evaluation["score"])
+
+
 
             # Preparar los datos para insertar en la tabla `exams_answers_tb`
             answer_data = {
@@ -563,12 +583,25 @@ async def receive_exam(exam: ExamRequest):
 
             # Actualizar el estado a "completed"
             update = supabase_user.table("exams_tb").update({"status": "completed"}).eq("id", response.data[0]["id"]).execute()
+        
+        
+        # Calcular el promedio del score
+        average_score = total_score / len(exam.answers)
+        print(f"\033[92m[INFO] Promedio del score: {average_score}\033[0m")
+
+        # Generar feedback general
+        combined_feedback_str = "\n".join(feedbacks_combined)
+        overall_feedback = generate_feedback(combined_feedback_str)
+        print(f"\033[92m[INFO] Feedback general generado: {overall_feedback}\033[0m")
+
 
         # Actualizar la tabla `exams_tb` con `finished_at`, `time_elapsed`, y `status` a `done`
         exam_update_data = {
             "status": "done",
             "finished_at": finished_at.isoformat(),
-            "time_elapsed": str(time_elapsed)  # Guardar el tiempo transcurrido en formato 'HH:MM:SS'
+            "time_elapsed": time_elapsed_str,  # Guardar el tiempo transcurrido en formato 'HH:MM:SS'
+            "score":average_score,
+            "feedback":overall_feedback
         }
 
         # Actualizar el examen en la tabla `exams_tb`
