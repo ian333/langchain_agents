@@ -348,7 +348,7 @@ class NewPathRequest(BaseModel):
     memberid: str = Field(..., example="8b013804-faa6-426e-bfcc-43227f58e3c8")
     projectid: str = Field(..., example="28722c50-cc1b-4b92-811b-0709320063e5")
     orgid: str = Field(..., example="6c0bfedb-258a-4c77-9bad-b0e87c0d9c98")
-    isDefault: bool = Field(True, example=True)
+    isDefault: bool = Field(..., example=True)
 
 @app.post("/path/new")
 async def new_path(
@@ -374,6 +374,8 @@ async def new_path(
             "icon": "😍",
             "level": 1,
             "orgid": new_path_data.orgid,
+            "status": "creating"  # Nuevo campo de estado
+
         })
 
         # Generar topics
@@ -427,7 +429,10 @@ async def process_remaining_tasks(topics, pathid, name, courseid, projectid, mem
             tasks.append(task)
 
         # Ejecutar todas las tareas en paralelo
-        asyncio.gather(*tasks)
+        await asyncio.gather(*tasks)
+        # Actualizar el estado a 'done' cuando todo el proceso esté completo
+        supabase_user.table("paths_tb").update({"status": "done"}).eq("id", pathid).execute()
+
 
     except Exception as e:
         print(f"\033[91m[ERROR] Error procesando las tareas en segundo plano: {str(e)}\033[0m")
