@@ -551,6 +551,7 @@ from multi_agents.exam_agent import generate_feedback
 from uuid import uuid4
 from datetime import datetime, timezone,timedelta
 from uuid import uuid4
+from dateutil import parser
 
 
 @app.post("/exam/evaluate")
@@ -566,7 +567,7 @@ async def receive_exam(exam: ExamRequest, background_tasks: BackgroundTasks):
         
         # Obtener el timestamp de cuando se creó el examen
         created_at_str = exam_details.data["created_at"]
-        created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+        created_at = parser.parse(created_at_str)
 
         # Calcular el tiempo actual y el tiempo transcurrido
         finished_at = datetime.now(timezone.utc)
@@ -622,7 +623,12 @@ async def receive_exam(exam: ExamRequest, background_tasks: BackgroundTasks):
         update = supabase_user.table("exams_tb").update({"status": "completed"}).eq("id", exam.exam_id).execute()
 
         # Calcular el promedio del score
-        average_score = total_score / len(exam.answers)
+        # Calcular el promedio del score
+        if len(exam.answers) > 0:
+            average_score = total_score / len(exam.answers)
+        else:
+            average_score = 0  # O un valor predeterminado como 0 en caso de que no haya respuestas
+
         print(f"\033[92m[INFO] Promedio del score: {average_score}\033[0m")
 
         # Generar feedback general
