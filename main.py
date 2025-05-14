@@ -371,7 +371,7 @@ async def new_path(
             "memberid": new_path_data.memberid,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "isDefault": new_path_data.isDefault,
-            "icon": "😍",
+            "icon": "📙",
             "level": 1,
             "orgid": new_path_data.orgid,
             "status": "creating"  # Nuevo campo de estado
