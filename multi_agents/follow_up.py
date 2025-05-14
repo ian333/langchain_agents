@@ -19,6 +19,7 @@ import google.generativeai as genai
 os.environ["GOOGLE_API_KEY"] = "AIzaSyDqRltPWDD4-HUxSJ9FzkEuCQ3T1F2lqKg"
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+from Prompt_languages import english,spanish
 
 
 def process_questions(questions_text):
@@ -45,6 +46,10 @@ def save_followups_to_db(followups, table_name):
     print(response)
 
 async def run_follow(query,history=None,id=None):
+    if language=="english":
+         main_prompt=english.main_prompt
+    elif language=="spanish":
+         main_prompt=spanish.main_prompt
     prompt_template = ChatPromptTemplate.from_template(    """
                                                        this is the history{history}
 Your job is to give me a list of questions related to {query}.

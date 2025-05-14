@@ -42,6 +42,7 @@ key_admin: str = config("SUPABASE_ADMIN_KEY")
 
 supabase_admin = create_client(supabase_url=url_admin,supabase_key= key_admin)
 
+global language
 
 # Configuración de la aplicación FastAPI
 app = FastAPI()
@@ -128,14 +129,23 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
         print(admin_data)
         processed_info,reference_videos = process_course_info(admin_data)
         print(processed_info)
+
     # Aquí se manejaría la lógica para interactuar con el agente (comentado actualmente)
     # ...
-
-
-    language= supabase_admin.table("companies_tb").select("*").eq("id", orgid).execute()
     
+    language_data=supabase_admin.table("companies_tb").select("*").eq("id", courseid).execute()
+
+    if language_data.data: 
+            language_data = language_data.data[0]
+            print("Se definio el lenguaje 😁😁 como",language)
+            print(language_data["language"])
+            language=language_data["language"]
+    else:
+
+        print("Se definio el lenguaje 😁😁 como",language)
+        language="english"
     # Guardar o actualizar la información en la tabla de usuario
-    user_data = {
+    user_data = {   
         "courseid": courseid,
         "memberid": memberid,
         "prompt": prompt,
@@ -147,7 +157,7 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 
     }
     print(user_data)
-    agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid))
+    agent_task = asyncio.create_task(run_agent(query=prompt, courseid=courseid, member_id=memberid, custom_prompt=processed_info, prompt=prompt, thread_id=threadid, videos=reference_videos,history=followup, orgid=orgid,language=language))
 
 
     return {"thread_id": threadid}

@@ -33,33 +33,23 @@ os.environ["GOOGLE_API_KEY"] = "AIzaSyDqRltPWDD4-HUxSJ9FzkEuCQ3T1F2lqKg"
 from langchain_google_genai import ChatGoogleGenerativeAI
 from Prompt_languages import spanish,english
 
-async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None):
+## Idiomas
+from Prompt_languages import english,spanish
+
+
+async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, thread_id=None, prompt=None, videos=None,history=None,orgid=None,language="english"):
+
+    if language=="english":
+         main_prompt=english.main_prompt
+    elif language=="spanish":
+         main_prompt=spanish.main_prompt
+    
     # Configurar el prompt y el modelo
-    prompt_template = ChatPromptTemplate.from_template("""
-                You are an advanced conversational model designed to provide accurate and contextually relevant responses. Your current role and the nature of this interaction are defined by the following specific context: {custom_prompt}. This context is crucial as it shapes your understanding, responses, and the way you engage with the user.
+    prompt_template = ChatPromptTemplate.from_template(main_prompt)
 
-                Please review the history of this chat: {history}. Each interaction provides valuable insights into the ongoing conversation's direction and tone. This historical context is essential for maintaining a coherent and relevant dialogue. It helps you understand the progression of the conversation and adjust your responses accordingly.
-
-                Your primary task is to address the user's question presented as: {user_message}. It’s imperative that you analyze both the provided context and the entirety of the chat history to tailor your response effectively. Your answer should directly address the user's inquiry, leveraging the specific details and nuances of the preceding interactions.
-                """)
-    spanish.main_prompt
-    # model = ChatOpenAI(model="gpt-3.5-turbo-0125", temperature=0)
-    # llm = Fireworks(
-    #                     model="accounts/fireworks/models/mixtral-8x7b-instruct", # see models: https://fireworks.ai/models
-    #                     temperature=0.6,
-    #                     max_tokens=100,
-    #                     top_p=1.0,
-    #                     top_k=40,
-    #                 )
-
-
-        # Initialize the language model
     llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
-
-
     chain = prompt_template | llm
-
     # Crear el contexto y el mensaje del usuario para la consulta
     user_message = query  # Asumiendo que query contiene el mensaje actual del usuario
 
@@ -81,12 +71,9 @@ async def run_agent(query, member_id=None, courseid=None, custom_prompt=None, th
             # Envía las tareas en segundo plano y continúa sin esperar a que finalicen
             video_task = await asyncio.create_task(videos.query(prompt))
             source_task = await asyncio.create_task(sources.query(prompt))
-                # Esperar a que finalicen las tareas
-            # await video_task
-            # await source_task
+
     finally:        
         pass
-        # return result,id
 
 
 
