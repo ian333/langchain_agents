@@ -170,15 +170,7 @@ class VectorDatabaseManager:
         instance_key = f"{type}-{courseid}"
         if instance_key in self.instances:
             instance = self.instances[instance_key]
-            result = await instance.query(query_text)
+            result = instance.query(query_text)
             return result
         else:
             return {"error": f"No instance found for {type}-{courseid}"}
-
-
-# # Ejemplo de uso:
-# vector_db_manager = VectorDatabaseManager()
-# result = vector_db_manager.query_instance(courseid="0a8b1e63-c1ac-4faf-8ce8-2e8934ebf275", query_text="What is the main topic?")
-# print(result)
-
-# Ejemplo de uso:

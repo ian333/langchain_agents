@@ -179,7 +179,10 @@ async def chat_endpoint(request_body: ChatRequest,background_tasks: BackgroundTa
 @app.post("/query")
 async def query_database(request: QueryRequest):
     try:
+        print(f"Received query request: {request}")
         result = await vector_db_manager.query_instance(courseid=request.courseid, query_text=request.query_text, type=request.type)
+        print(f"Query result: {result}")
         return result
     except Exception as e:
+        print(f"Error processing query: {e}")
         raise HTTPException(status_code=500, detail=str(e))

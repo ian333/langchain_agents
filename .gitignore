@@ -173,5 +173,47 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 *.pyc
+
+# Ignore SQLite database files
 *.db
+<<<<<<< HEAD
 skillstech/
+=======
+
+# Ignore the skillstech directory
+skillstech/
+
+# Ignore environment variable files (common practice)
+.env
+
+# Ignore log files
+*.log
+
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore temporary files created by editors
+*~
+*.swp
+*.swo
+
+# Ignore macOS specific files
+.DS_Store
+
+# Ignore Windows specific files
+Thumbs.db
+
+# Ignore Celery related files
+celerybeat-schedule
+*.celerybeat-schedule
+celerybeat.pid
+celeryd.pid
+celeryd.log
+celerybeat.log
+celery.log
+
+# Ignore Uvicorn related files
+uvicorn.log
+uvicorn.error.log
+uvicorn.access.log
+>>>>>>> 754a17f (Se modifico para hacer bases de datos locales)
